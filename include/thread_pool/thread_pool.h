@@ -12,6 +12,7 @@ typedef struct thread_pool {
     volatile int n_threads;
 } thread_pool;
 
-int thread_pool_add(thread_pool *threadpool, void (*handler)(void*), void *args);
+thread_pool *thread_pool_create(int n_workers);
+int thread_pool_add(thread_pool *threadpool, void (*handler)(void*), void (*destructor)(void*), void *args);
 void thread_pool_destroy(thread_pool *pool);
 #endif

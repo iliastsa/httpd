@@ -33,7 +33,7 @@ thread_pool *thread_pool_create(int n_workers) {
         return NULL;
     }
 
-    threadpool->n_threads = n_workers;
+    threadpool->n_threads = 0;
     threadpool->running   = 1;
 
     // Initialize threads
@@ -51,11 +51,12 @@ thread_pool *thread_pool_create(int n_workers) {
     return threadpool;
 }
 
-int thread_pool_add(thread_pool *threadpool, void (*handler)(void*), void *args){
+int thread_pool_add(thread_pool *threadpool, void (*handler)(void*), void (*destructor)(void*), void *args){
     // Prepare task struct
     task wrapper;
     wrapper.handler = handler;
     wrapper.args    = args;
+    wrapper.destructor = destructor;
 
     if (task_queue_put(&threadpool->task_queue, &wrapper) < 0) {
         fprintf(stderr, "Failed to add task\n");
