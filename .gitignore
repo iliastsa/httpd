@@ -1,0 +1,9 @@
+bin/thread_pool/*
+bin/test/*
+!bin/.gitinclude
+!bin/thread_pool/.gitinclude
+!bin/test/.gitinclude
+.idea/*
+CMakeLists.txt
+cmake-build-debug/*
+.ycm_extra_conf.py
