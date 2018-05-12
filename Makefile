@@ -28,7 +28,7 @@ TEST_SRC    = $(addprefix $(TEST_SRCDIR), $(TEST_CFILES))
 TEST_OBJ    = $(addprefix $(TEST_BINDIR), $(TEST_CFILES:.c=.o))
 
 test: $(TP_OBJ) $(TEST_OBJ)
-	$(CC) $(CFLAGS) -I $(TEST_INCL_DIR) $(TEST_OBJ) $(TP_OBJ) -o test -$(LIBS)
+	$(CC) $(CFLAGS) -I $(TEST_INCL_DIR) $(TEST_OBJ) $(TP_OBJ) -o run_test -$(LIBS)
 
 bin/thread_pool/%.o : src/thread_pool/%.c $(TP_DEPS) 
 	$(CC) -c $(CFLAGS) -I $(TP_INCL_DIR) $< -o $@
@@ -38,5 +38,5 @@ bin/test/%.o : src/test/%.c $(TEST_DEPS)
 
 clean:
 	rm -f $(TP_OBJ)
-	rm -f test $(TEST_OBJ)
+	rm -f run_test $(TEST_OBJ)
 
