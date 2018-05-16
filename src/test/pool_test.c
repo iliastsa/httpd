@@ -10,72 +10,25 @@
 #include <netdb.h>
 
 #include "thread_pool.h"
+#include "request.h"
+#include "utils.h"
 
 #define perror_exit(msg) { perror(msg); exit(-1); }
 
-void test(void *params) {
+void thread_func(void *params) {
     printf("Thread %ld : Test func\n", pthread_self());
     sleep(1);
 }
 
 void test_threads() {
     thread_pool *pool = thread_pool_create(2);
-    thread_pool_add(pool, test, NULL, NULL);
-    thread_pool_add(pool, test, NULL, NULL);
-    thread_pool_add(pool, test, NULL, NULL);
-    thread_pool_add(pool, test, NULL, NULL);
-    thread_pool_add(pool, test, NULL, NULL);
-    thread_pool_add(pool, test, NULL, NULL);
+    thread_pool_add(pool, thread_func, NULL, NULL);
+    thread_pool_add(pool, thread_func, NULL, NULL);
+    thread_pool_add(pool, thread_func, NULL, NULL);
+    thread_pool_add(pool, thread_func, NULL, NULL);
+    thread_pool_add(pool, thread_func, NULL, NULL);
+    thread_pool_add(pool, thread_func, NULL, NULL);
     thread_pool_destroy(pool);
-}
-
-int read_message(int fd, char **msg, const char *delim) {
-    int bufsz = 3;
-    static char buf[3];
-
-    char *temp    = NULL;
-    char *ret_buf = NULL;
-    int len = 0;
-    int b_read;
-    int pattern_idx = 0;
-    int goal_idx = strlen(delim);
-    while ((b_read=read(fd, buf, bufsz)) > 0) {
-        len += b_read;
-        temp = malloc (len + 1);
-
-        printf("Read %d bytes from socket\n", b_read);
-
-        if (ret_buf != NULL)
-            memcpy(temp, ret_buf, len - b_read);
-
-        for (int i = 0; i < b_read; ++i) {
-            *(temp + len - b_read + i) = buf[i];
-
-            if (buf[i] == delim[pattern_idx]) {
-                printf("Found %d\n", pattern_idx);
-                pattern_idx++;
-            }
-            else
-                pattern_idx = 0;
-
-            if (pattern_idx == goal_idx)
-                break;
-        }
-
-        free(ret_buf);
-        ret_buf = temp;
-        ret_buf[len] = '\0';
-
-        if (ret_buf[len-1] == '\n')
-            printf("Has newline at end\n");
-
-        if (b_read < bufsz)
-            break;
-
-    }
-
-    *msg = ret_buf;
-    return len;
 }
 
 void test_socket() {
@@ -83,7 +36,6 @@ void test_socket() {
     socklen_t clientlen;
 
     int port = 9004;
-
 
     int newsock;
     int sock;
@@ -122,8 +74,10 @@ void test_socket() {
         printf("Accepted connection from %s\n", rem->h_name);
 
         char *buf;
-        read_message(newsock, &buf, "\r\n");
+        //read_message(newsock, &buf, "\r\n");
+        int ret = read_request(newsock, &buf);
 
+        P_DEBUG("Return code is %d\n", ret);
         printf("%s", buf);
 
         free(buf);
