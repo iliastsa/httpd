@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "parse_utils.h"
+#include "request.h"
 #include "utils.h"
 
 #define CHUNK_SZ 1024
@@ -94,7 +96,7 @@ char read_request(int fd, char **header_buf) {
             P_DEBUG("Found end of request sequence at byte %d\n", header_length - bytes_read + end);
             P_DEBUG("Setting 2 bytes from the end to NULL, to signify string end\n");
 
-            new_buf[header_length - bytes_read + end - 2] = '\0';
+            new_buf[header_length - bytes_read + end - 1] = '\0';
             termination_found = 1;
         }
 
@@ -107,4 +109,16 @@ char read_request(int fd, char **header_buf) {
 
     *header_buf = currently_read;
     return 1;
+}
+
+HttpRequest *parse_request(char *request){
+    // Check if lines can be safely seperated
+    if(check_line_termination(request))
+        P_DEBUG("The header has malformed lines\n");
+    else
+        P_DEBUG("The header is ok!\n");
+
+    // Start line seperation here
+
+    return NULL;
 }

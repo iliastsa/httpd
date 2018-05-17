@@ -80,6 +80,8 @@ void test_socket() {
         P_DEBUG("Return code is %d\n", ret);
         printf("%s", buf);
 
+        parse_request(buf);
+
         free(buf);
     }
 }

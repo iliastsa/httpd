@@ -1,6 +1,6 @@
 CC        = gcc
 LIBS      = lpthread
-CFLAGS    = -g3
+CFLAGS    = -g3 -D DEBUG
 
 TP_BINDIR   = ./bin/thread_pool/
 TP_SRCDIR   = ./src/thread_pool/
@@ -18,7 +18,8 @@ HTTP_BINDIR   = ./bin/http/
 HTTP_SRCDIR   = ./src/http/
 HTTP_INCL_DIR = ./include/http/
 
-HTTP_CFILES = request.c
+HTTP_CFILES = request.c\
+			  parse_utils.c\
 
 HTTP_DEPS   = ./include/http/*
 
@@ -58,4 +59,5 @@ bin/test/%.o : src/test/%.c $(TEST_DEPS)
 clean:
 	rm -f $(TP_OBJ)
 	rm -f run_test $(TEST_OBJ)
+	rm -f $(HTTP_OBJ)
 
