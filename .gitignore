@@ -1,8 +1,12 @@
-bin/thread_pool/*
-bin/test/*
 !bin/.gitinclude
 !bin/thread_pool/.gitinclude
 !bin/test/.gitinclude
+!bin/http/.gitinclude
+
+bin/thread_pool/*
+bin/http/*
+bin/test/*
+
 !src/test/*
 .idea/*
 run_test
