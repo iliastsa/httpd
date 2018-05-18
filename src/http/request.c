@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -51,6 +52,53 @@ int copy_until_end(char *source, char *dest, int sz, int *offset){
     }
 
     return -1;
+}
+
+static
+void print_debug(HttpError error) {
+    switch (error) {
+        case BAD_REQUEST:
+            P_DEBUG("Bad request\n");
+            break;
+        case NOT_IMPLEMENTED:
+            P_DEBUG("Method not implemented\n");
+            break;
+        case VERSION_NOT_SUPPORTED:
+            P_DEBUG("HTTP version not supported\n");
+            break;
+        case UNEXPECTED:
+            P_DEBUG("HTTP version not supported\n");
+            break;
+        case OK:
+            P_DEBUG("Request line OK!\n");
+            break;
+    }
+}
+
+char init_request(HttpRequest *request){
+    StrHashMap *map = (StrHashMap*) malloc(sizeof(StrHashMap));
+
+    if (map == NULL) {
+        P_DEBUG("Memory allocation for HTTP request failed\n");
+        return -1;
+    }
+
+    // Initiaize map
+    init_str_map(map);
+
+    request->key_value_pairs = map;
+
+    return 0;
+}
+
+void free_request(HttpRequest *request) {
+    // Free header buffer
+    free(request->header);
+
+    // Free hashmap
+    free_str_map(request->key_value_pairs, 0);
+
+    free(request);
 }
 
 /*
@@ -111,14 +159,39 @@ char read_request(int fd, char **header_buf) {
     return 1;
 }
 
-HttpRequest *parse_request(char *request){
-    // Check if lines can be safely seperated
-    if(check_line_termination(request))
+HttpError parse_request(char *request, HttpRequest *req){
+    // Check if lines can be safely tokenized
+    if(check_line_termination(request)) {
         P_DEBUG("The header has malformed lines\n");
+        return BAD_REQUEST;
+    }
     else
         P_DEBUG("The header is ok!\n");
 
-    // Start line seperation here
+    char *start;
+    char *save_ptr;
 
-    return NULL;
+    // Start line seperation here
+    for (start = request; ; start = NULL) {
+        HttpError err;
+
+        // Read line
+        char *line_ptr = strtok_r(start, "\r\n", &save_ptr);
+        if (line_ptr == NULL)
+            break;
+
+        // First line is special, parse with appropriate function
+        if (start != NULL) {
+            if ((err = parse_request_line(line_ptr, req)) != OK)
+                return err;
+            else
+                continue;
+        }
+
+        // Each line is a key-value pair, that is handled in a similar way
+        if ((err = parse_general_header(line_ptr, req)) != OK)
+            return err;
+    }
+
+    return OK;
 }

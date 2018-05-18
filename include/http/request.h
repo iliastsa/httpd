@@ -1,7 +1,8 @@
 #ifndef REQUEST_H
 #define REQUEST_H
 
-#include <inttypes.h>
+#include "str_map.h"
+#include "http_types.h"
 
 // Only GET is implemented
 typedef enum {
@@ -17,11 +18,16 @@ typedef struct {
     // File requested
     char *requested_file;
 
-    // Host name
-    char *host;
+    // Header key-value pairs
+    StrHashMap *key_value_pairs;
+
+    // Raw header data poitner; used for freeing.
+    char *header;
 } HttpRequest;
 
+char init_request(HttpRequest *requst);
+void free_request(HttpRequest *request);
 char read_request(int fd, char **header_buf);
-HttpRequest *parse_request(char *request);
+HttpError parse_request(char *request, HttpRequest *req);
 
 #endif

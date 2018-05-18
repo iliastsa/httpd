@@ -80,8 +80,19 @@ void test_socket() {
         P_DEBUG("Return code is %d\n", ret);
         printf("%s", buf);
 
-        parse_request(buf);
+        HttpRequest *req = malloc(sizeof(HttpRequest));
+        init_request(req);
 
+        if (parse_request(buf, req) != OK )
+            P_DEBUG("Request failed\n");
+        else {
+            P_DEBUG("Request passed!\n");
+            P_DEBUG("Here is the requested_file: (%s) \n", req->requested_file);
+        }
+
+        print_str_map(req->key_value_pairs);
+
+        free_request(req);
         free(buf);
     }
 }

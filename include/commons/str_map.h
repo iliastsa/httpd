@@ -17,5 +17,6 @@ typedef struct {
 void init_str_map(StrHashMap *map);
 char insert_str_map(StrHashMap *map, char *key, char *val);
 char *lookup_str_map(StrHashMap *map, char *str);
+void print_str_map(StrHashMap *map);
 void free_str_map(StrHashMap *map, char free_content);
 #endif

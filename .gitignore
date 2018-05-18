@@ -1,11 +1,13 @@
-!bin/.gitinclude
-!bin/thread_pool/.gitinclude
-!bin/test/.gitinclude
-!bin/http/.gitinclude
-
 bin/thread_pool/*
+bin/commons/*
 bin/http/*
 bin/test/*
+
+!bin/.gitinclude
+!bin/thread_pool/.gitinclude
+!bin/commons/.gitinclude
+!bin/test/.gitinclude
+!bin/http/.gitinclude
 
 !src/test/*
 .idea/*

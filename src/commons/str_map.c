@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "utils.h"
 #include "str_map.h"
 
 // Hash string by summing the characters.
@@ -56,6 +57,23 @@ char insert_str_map(StrHashMap *map, char *key, char *val){
     map->n_entries++;
 
     return 1;
+}
+
+void print_str_map(StrHashMap *map) {
+    // If map is NULL, return
+    if (map == NULL)
+        return;
+
+    // For every bucket in our hashmap
+    for (int i = 0; i < STR_HASH_SIZE; ++i) {
+        StrHashNode *node = map->buckets[i];
+
+        // For each node in the bucket
+        while (node != NULL) {
+            P_DEBUG("Key : (%s), Value : (%s)\n", node->key, node->val);
+            node = node->next;
+        }
+    }
 }
 
 // Free hashmap.
