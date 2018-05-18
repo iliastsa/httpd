@@ -1,6 +1,9 @@
 #ifndef SERVER_TYPES_H
 #define SERVER_TYPES_H
 
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <time.h>
 
 #include "thread_pool.h"
@@ -18,6 +21,18 @@ typedef struct {
 
     // Thread pool
     thread_pool *thread_pool;
+
+    // HTTP socket fd
+    int http_socket;
+
+    // Command socket fd
+    int cmd_socket;
+
+    // HTTP socket structs
+    struct sockaddr_in http_in;
+
+    // Command socket structs
+    struct sockaddr_in cmd_in;
 } ServerResources;
 
 #endif

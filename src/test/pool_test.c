@@ -9,6 +9,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+#include "server_manager.h"
 #include "thread_pool.h"
 #include "request.h"
 #include "utils.h"
@@ -97,7 +98,14 @@ void test_socket() {
     }
 }
 
+void test_server(){
+    ServerResources *server = server_create(9090, 8080, 3, "test");
+
+    server_init_sockets(server, 10);
+    server_run(server);
+}
+
 int main(void){
-    test_socket();
+    test_server();
     return 0;
 }

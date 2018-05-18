@@ -2,6 +2,9 @@
 #define UTILS_H
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
 #if defined(DEBUG)
     #define P_DEBUG(...) fprintf(stderr,"[DEBUG] : "__VA_ARGS__)
