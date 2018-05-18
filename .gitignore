@@ -1,17 +1,20 @@
 bin/thread_pool/*
 bin/commons/*
-bin/http/*
+bin/server/*
 bin/test/*
+bin/http/*
 
-!bin/.gitinclude
 !bin/thread_pool/.gitinclude
 !bin/commons/.gitinclude
+!bin/server/.gitinclude
 !bin/test/.gitinclude
 !bin/http/.gitinclude
+!bin/.gitinclude
 
-!src/test/*
-.idea/*
-run_test
-CMakeLists.txt
 cmake-build-debug/*
+.idea/*
+
 .ycm_extra_conf.py
+CMakeLists.txt
+
+run_test

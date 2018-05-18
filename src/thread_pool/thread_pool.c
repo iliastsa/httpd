@@ -16,7 +16,7 @@ thread_pool *thread_pool_create(int n_workers) {
 
     if (threadpool == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
-            return NULL;
+        return NULL;
     }
 
     if (task_queue_init(&threadpool->task_queue) < 0) {
