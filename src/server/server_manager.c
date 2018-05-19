@@ -3,6 +3,7 @@
 #include <poll.h>
 
 #include "server_types.h"
+#include "request_manager.h"
 #include "utils.h"
 
 #define HTTP 0
@@ -122,13 +123,14 @@ char server_run(ServerResources *server) {
 
             P_DEBUG("Incoming fd : %d\n", fd);
             // Allocate int to pass to thread
-            int *connection_fd = (int*) malloc(sizeof(int));
-            if (connection_fd == NULL) {
+            AcceptArgs *params = (AcceptArgs*) malloc(sizeof(AcceptArgs));
+            if (params == NULL) {
                 P_ERR("Error allocation memory for thread arg", errno);
             }
 
-            *connection_fd = fd;
-            thread_pool_add(server->thread_pool, thread_accept, NULL, connection_fd);
+            params->fd = fd;
+            params->root_dir = server->root_dir;
+            thread_pool_add(server->thread_pool, accept_http, NULL, params);
         }
     }
 }
