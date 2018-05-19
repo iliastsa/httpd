@@ -27,7 +27,7 @@ typedef struct {
 
 char init_request(HttpRequest *requst);
 void free_request(HttpRequest *request);
-char read_request(int fd, char **header_buf);
+HttpError read_request(int fd, char **header_buf);
 HttpError parse_request(char *request, HttpRequest *req);
 
 #endif

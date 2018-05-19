@@ -7,29 +7,10 @@
 
 #include "parse_utils.h"
 #include "request.h"
+#include "http_io.h"
 #include "utils.h"
 
 #define CHUNK_SZ 1024
-
-static
-int read_bytes(int fd, char *buf, size_t n_bytes) {
-    int bytes_read;
-
-    for (;;) {
-        bytes_read = read(fd, buf, n_bytes);
-
-        // Check for errors and EOF
-        if (bytes_read < 0)
-            switch (errno) {
-                case EINTR:
-                    continue;
-                default:
-                    return -1;
-            }
-        else
-            return bytes_read;
-    }
-}
 
 static
 int copy_until_end(char *source, char *dest, int sz, int *offset){
@@ -80,6 +61,8 @@ char init_request(HttpRequest *request){
 
     if (map == NULL) {
         P_DEBUG("Memory allocation for HTTP request failed\n");
+
+        request->key_value_pairs = NULL;
         return -1;
     }
 
@@ -106,7 +89,7 @@ void free_request(HttpRequest *request) {
  * reads are issued until \r\n\r\n is found.
  *
  */
-char read_request(int fd, char **header_buf) {
+HttpError read_request(int fd, char **header_buf) {
     char chunk_buf[CHUNK_SZ];
 
     // Length of the header in bytes
@@ -124,7 +107,11 @@ char read_request(int fd, char **header_buf) {
 
         if (bytes_read < 0) {
             free(currently_read);
-            return -1;
+            return UNEXPECTED;
+        }
+        else if (bytes_read == 0) {
+            free(currently_read);
+            return BAD_REQUEST;
         }
 
         // We need to grow the header, allocate space to accomodate the new header
@@ -134,6 +121,7 @@ char read_request(int fd, char **header_buf) {
         if (new_buf == NULL) {
             P_DEBUG("Memory allocation failed...\n");
             free(currently_read);
+            return UNEXPECTED;
         }
 
         if (currently_read != NULL)
@@ -156,10 +144,13 @@ char read_request(int fd, char **header_buf) {
     }
 
     *header_buf = currently_read;
-    return 1;
+    return OK;
 }
 
 HttpError parse_request(char *request, HttpRequest *req){
+    // Store request into header var of struct
+    req->header = request;
+
     // Check if lines can be safely tokenized
     if(check_line_termination(request)) {
         P_DEBUG("The header has malformed lines\n");

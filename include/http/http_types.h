@@ -4,10 +4,12 @@
 #include "str_map.h"
 
 typedef enum {
-    BAD_REQUEST,
+    BAD_REQUEST = 0,
     NOT_IMPLEMENTED,
     VERSION_NOT_SUPPORTED,
     UNEXPECTED,
+    NOT_FOUND,
+    FORBIDDEN,
     OK
 } HttpError;
 

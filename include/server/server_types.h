@@ -35,4 +35,9 @@ typedef struct {
     struct sockaddr_in cmd_in;
 } ServerResources;
 
+typedef struct {
+    int fd;
+    char *root_dir;
+} AcceptArgs;
+
 #endif

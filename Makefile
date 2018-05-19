@@ -19,6 +19,7 @@ SERVER_SRCDIR   = ./src/server/
 SERVER_INCL_DIR = ./include/server/
 
 SERVER_CFILES = server_manager.c\
+				request_manager.c\
 
 SERVER_DEPS   = ./include/server/*
 
@@ -31,6 +32,8 @@ HTTP_INCL_DIR = ./include/http/
 
 HTTP_CFILES = request.c\
 			  parse_utils.c\
+			  response_messages.c\
+			  http_io.c\
 
 HTTP_DEPS   = ./include/http/*
 
@@ -41,7 +44,8 @@ COMMONS_BINDIR   = ./bin/commons/
 COMMONS_SRCDIR   = ./src/commons/
 COMMONS_INCL_DIR = ./include/commons/
 
-COMMONS_CFILES = str_map.c
+COMMONS_CFILES = str_map.c\
+				 utils.c\
 
 COMMONS_DEPS   = ./include/commons/*
 
@@ -80,7 +84,7 @@ bin/commons/%.o : src/commons/%.c $(COMMONS_DEPS)
 	$(CC) -c $(CFLAGS) -I $(COMMONS_INCL_DIR) $< -o $@
 
 bin/server/%.o : src/server/%.c $(SERVER_DEPS) $(TP_DEPS)
-	$(CC) -c $(CFLAGS) -I $(SERVER_INCL_DIR) -I $(TP_INCL_DIR) -I $(COMMONS_INCL_DIR) $< -o $@
+	$(CC) -c $(CFLAGS) -I $(HTTP_INCL_DIR) -I $(SERVER_INCL_DIR) -I $(TP_INCL_DIR) -I $(COMMONS_INCL_DIR) $< -o $@
 
 bin/test/%.o : src/test/%.c $(TEST_DEPS) 
 	$(CC) -c $(CFLAGS) -I $(TEST_INCL_DIR) -I $(COMMONS_INCL_DIR) -I $(SERVER_INCL_DIR) -I $(HTTP_INCL_DIR) $< -o $@

@@ -99,13 +99,22 @@ void test_socket() {
 }
 
 void test_server(){
-    ServerResources *server = server_create(9090, 8080, 3, "test");
+    ServerResources *server = server_create(9090, 8080, 3, "/home/iliastsa/root_dir");
 
     server_init_sockets(server, 10);
     server_run(server);
 }
 
+
+extern const char * const response_messages[];
+
+void enum_test(){
+    printf(response_messages[NOT_IMPLEMENTED], "");
+    printf("\n");
+}
+
 int main(void){
     test_server();
+    //enum_test();
     return 0;
 }
