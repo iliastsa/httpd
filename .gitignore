@@ -16,5 +16,6 @@ cmake-build-debug/*
 
 .ycm_extra_conf.py
 CMakeLists.txt
+test_req.txt
 
 run_test

@@ -112,9 +112,9 @@ void write_response(int fd, HttpError err, HttpRequest *request, char *full_path
 }
 
 static
-HttpError check_file_access(char *file, char *root_dir, char *full_path) {
+HttpError check_file_access(char *file, char *root_dir, char **full_path) {
     P_DEBUG("File : (%s) Root : (%s)\n", file, root_dir);
-    char *expanded_path = realpath(file, full_path);
+    char *expanded_path = realpath(file, NULL);
 
     if (expanded_path == NULL) {
         switch (errno) {
@@ -127,6 +127,8 @@ HttpError check_file_access(char *file, char *root_dir, char *full_path) {
                 return UNEXPECTED;
         }
     }
+
+    *full_path = expanded_path;
 
     struct stat f_stats;
 
@@ -169,7 +171,7 @@ void accept_http(void *arg) {
     char *root_dir = ((AcceptArgs*)arg)->root_dir;
     char *header   = NULL;
 
-    char file_full_path[PATH_MAX + 1];
+    char *file_full_path = NULL;
     char *file_w_root    = NULL;
 
     P_DEBUG("Got fd %d\n", fd);
@@ -210,14 +212,13 @@ void accept_http(void *arg) {
     // Copy file
     memcpy(file_w_root + root_len, request->requested_file, file_len);
 
-
-    if ((err = check_file_access(file_w_root, root_dir, file_full_path)) != OK)
+    if ((err = check_file_access(file_w_root, root_dir, &file_full_path)) != OK)
         goto CLOSE_CONNECTION;
 
 CLOSE_CONNECTION:
     write_response(fd, err, request, file_full_path);
     free_request(request);
     free(file_w_root);
-    //free(file_full_path);
+    free(file_full_path);
     close(fd);
 }
