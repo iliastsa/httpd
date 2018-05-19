@@ -104,7 +104,7 @@ EXIT:
 }
 
 static 
-void write_response(int fd, HttpError err, HttpRequest *request, char *full_path) {
+void write_response(int fd, HttpError err, char *full_path) {
     if (err == OK) 
         write_ok_response(fd, full_path);
     else
@@ -152,7 +152,6 @@ HttpError check_file_access(char *file, char *root_dir, char **full_path) {
     if (!(f_stats.st_mode & S_IRUSR))
         return FORBIDDEN;
 
-    // TODO : Check that start of path is rootdir, when expanded fullpath
     int root_len = strlen(root_dir);
     int file_len = strlen(expanded_path);
 
@@ -216,7 +215,7 @@ void accept_http(void *arg) {
         goto CLOSE_CONNECTION;
 
 CLOSE_CONNECTION:
-    write_response(fd, err, request, file_full_path);
+    write_response(fd, err, file_full_path);
     free_request(request);
     free(file_w_root);
     free(file_full_path);
