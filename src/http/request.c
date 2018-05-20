@@ -22,7 +22,7 @@ int copy_until_end(char *source, char *dest, int sz, int *offset){
         dest[i] = source[i];
 
         if (source[i] == end_of_header[*offset]) {
-            P_DEBUG("Found symbol num %d from end of header delimiter\n", *offset);
+            //P_DEBUG("Found symbol num %d from end of header delimiter\n", *offset);
             (*offset)++;
         }
         else
@@ -50,6 +50,12 @@ void print_debug(HttpError error) {
         case UNEXPECTED:
             P_DEBUG("HTTP version not supported\n");
             break;
+        case FORBIDDEN:
+            P_DEBUG("Forbidden request\n");
+            break;
+        case NOT_FOUND:
+            P_DEBUG("Requested file not found\n");
+            break;
         case OK:
             P_DEBUG("Request line OK!\n");
             break;
@@ -75,6 +81,9 @@ char init_request(HttpRequest *request){
 }
 
 void free_request(HttpRequest *request) {
+    if (request == NULL)
+        return;
+
     // Free header buffer
     free(request->header);
 
