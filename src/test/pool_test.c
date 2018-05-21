@@ -103,8 +103,8 @@ void test_server(){
 
     server_init_sockets(server, 10);
     server_run(server);
+    free_server(server);
 }
-
 
 extern const char * const response_messages[];
 

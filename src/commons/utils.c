@@ -10,16 +10,20 @@ char count_bytes(char *filepath, long *n_bytes) {
     if (fp == NULL)
         return -1;
 
-    if(fseek(fp, 0L, SEEK_END) != 0)
+    if(fseek(fp, 0L, SEEK_END) != 0) {
+        fclose(fp);
         return -1;
+    }
 
     long sz = ftell(fp);
 
-    if (sz < 0)
+    if (sz < 0) {
+        fclose(fp);
         return -1;
-
-    rewind(fp);
+    }
 
     *n_bytes = sz;
+
+    fclose(fp);
     return 0;
 }

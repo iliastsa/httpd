@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <time.h>
 
+#include "server_manager.h"
 #include "server_types.h"
 #include "request.h"
 #include "http_io.h"
@@ -41,21 +42,24 @@ void write_err_response(int fd, HttpError err) {
 
     if (msg == NULL) {
         P_ERR("Malloc failed for date string", errno);
-        return;
+        goto EXIT;
     }
 
     len = snprintf(msg, len + 1, format, date);
     
     if (len < 0) { 
         P_DEBUG("sprintf failed while writing the date\n");
-        return;
+        goto EXIT;
     }
 
     write_bytes(fd, msg, len);
+
+EXIT:
+    free(msg);
 }
 
 static 
-void write_ok_response(int fd, char *file) {
+void write_ok_response(int fd, char *file, ServerStats *stats) {
     const char *format = response_messages[OK];
 
     char *msg  = NULL;
@@ -96,17 +100,18 @@ void write_ok_response(int fd, char *file) {
         goto EXIT;
     }
 
-    write_bytes(fd, msg, len);
-    write_file(fd, file);
+    // If header write and html file write suceeded, update the stats
+    if (!write_bytes(fd, msg, len) && !write_file(fd, file))
+        update_stats(stats, sz);
 
 EXIT:
     free(msg);
 }
 
 static 
-void write_response(int fd, HttpError err, char *full_path) {
+void write_response(int fd, HttpError err, char *full_path, ServerStats *stats) {
     if (err == OK) 
-        write_ok_response(fd, full_path);
+        write_ok_response(fd, full_path, stats);
     else
         write_err_response(fd, err);
 }
@@ -166,8 +171,10 @@ HttpError check_file_access(char *file, char *root_dir, char **full_path) {
 }
 
 void accept_http(void *arg) {
-    int fd         = ((AcceptArgs*)arg)->fd;
-    char *root_dir = ((AcceptArgs*)arg)->root_dir;
+    int fd             = ((AcceptArgs*)arg)->fd;
+    char *root_dir     = ((AcceptArgs*)arg)->root_dir;
+    ServerStats *stats = ((AcceptArgs*)arg)->stats;
+
     char *header   = NULL;
 
     char *file_full_path = NULL;
@@ -215,7 +222,7 @@ void accept_http(void *arg) {
         goto CLOSE_CONNECTION;
 
 CLOSE_CONNECTION:
-    write_response(fd, err, file_full_path);
+    write_response(fd, err, file_full_path, stats);
     free_request(request);
     free(file_w_root);
     free(file_full_path);

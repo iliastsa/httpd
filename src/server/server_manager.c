@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <poll.h>
 
-#include "server_types.h"
 #include "request_manager.h"
+#include "server_types.h"
 #include "utils.h"
 
 #define HTTP 0
@@ -17,6 +17,10 @@ ServerResources *server_create(int s_port, int c_port, int n_threads, char *r_di
         return NULL;
     }
 
+    // Initialize fds to -1, so we know they are unset
+    server->http_socket = -1;
+    server->cmd_socket  = -1;
+
     // Set ports
     server->serving_port = s_port; 
     server->command_port = c_port; 
@@ -28,15 +32,62 @@ ServerResources *server_create(int s_port, int c_port, int n_threads, char *r_di
     // Read current time
     time(&server->t_start);
 
+    // Set stats
+    server->stats.page_count = 0;
+    server->stats.byte_count = 0;
+
+    int err;
+    if ((err = pthread_mutex_init(&server->stats.lock, NULL))) {
+        P_ERR("Failed to initialize server stats mutex", err);
+        free(server);
+        return NULL;
+    }
+
     // Create thread pool
     server->thread_pool = thread_pool_create(n_threads);
 
     if (server->thread_pool == NULL) {
         ERR("Thread pool creation failed");
+        free(server);
         return NULL;
     }
 
     return server;
+}
+
+void free_server(ServerResources *server) {
+    if (server == NULL)
+        return;
+
+    if (server->http_socket != -1)
+        close(server->http_socket);
+
+    if (server->cmd_socket != -1)
+        close(server->cmd_socket);
+
+    // Destroy thread pool
+    thread_pool_destroy(server->thread_pool);
+
+    // Free stats mutex
+    pthread_mutex_destroy(&server->stats.lock);
+
+    P_DEBUG("Server stats: Bytes : %lld Pages : %lld\n", server->stats.byte_count, server->stats.page_count);
+
+    free(server);
+}
+
+void update_stats(ServerStats *stats, unsigned long long bytes) {
+    int err;
+    if((err = pthread_mutex_lock(&stats->lock))) {
+        P_ERR("Could not acquire lock for stats", err);
+        return;
+    }
+
+    stats->byte_count += bytes;
+    stats->page_count++;
+
+    if((err = pthread_mutex_unlock(&stats->lock)))
+        P_ERR("Could not unlock lock for stats", err);
 }
 
 static
@@ -113,7 +164,9 @@ char server_run(ServerResources *server) {
 
     for(;;) {
         // TODO : Check status, and act accordingly
-        int status = poll(sockets, 2, -1);
+        int status = poll(sockets, 2, 10000);
+        if (status == 0)
+            break;
 
         int fd;
         if (sockets[HTTP].revents & POLLIN) {
@@ -128,9 +181,14 @@ char server_run(ServerResources *server) {
                 P_ERR("Error allocation memory for thread arg", errno);
             }
 
-            params->fd = fd;
+            // Prepare parameters to be passed to handler function
+            params->fd       = fd;
             params->root_dir = server->root_dir;
+            params->stats    = &server->stats;
+
             thread_pool_add(server->thread_pool, accept_http, NULL, params);
         }
     }
+
+    return 0;
 }

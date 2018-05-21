@@ -4,9 +4,17 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <pthread.h>
 #include <time.h>
 
 #include "thread_pool.h"
+
+typedef struct {
+    pthread_mutex_t lock;
+
+    unsigned long long page_count;
+    unsigned long long byte_count;
+} ServerStats;
 
 typedef struct {
     // HTTP request and command ports
@@ -33,11 +41,15 @@ typedef struct {
 
     // Command socket structs
     struct sockaddr_in cmd_in;
+
+    // Server statistics
+    ServerStats stats;
 } ServerResources;
 
 typedef struct {
     int fd;
     char *root_dir;
+    ServerStats *stats;
 } AcceptArgs;
 
 #endif

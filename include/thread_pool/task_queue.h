@@ -1,8 +1,8 @@
 #ifndef TASK_QUEUE_H
 #define TASK_QUEUE_H
 
+#include <pthread.h>
 #include "task.h"
-#include "pthread.h"
 
 typedef struct task_q_node {
     task task;
