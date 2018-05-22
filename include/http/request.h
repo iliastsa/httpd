@@ -1,8 +1,8 @@
 #ifndef REQUEST_H
 #define REQUEST_H
 
-#include "str_map.h"
 #include "http_types.h"
+#include "str_map.h"
 
 // Only GET is implemented
 typedef enum {

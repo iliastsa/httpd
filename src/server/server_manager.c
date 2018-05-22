@@ -164,9 +164,18 @@ char server_run(ServerResources *server) {
 
     for(;;) {
         // TODO : Check status, and act accordingly
-        int status = poll(sockets, 2, 10000);
+        int status = poll(sockets, 2, -10000);
+
         if (status == 0)
             break;
+        if (status < 0)
+            switch (errno) {
+                case EINTR:
+                    continue;
+                default:
+                    P_DEBUG("Something went wrong with poll\n");
+                    continue;
+            }
 
         int fd;
         if (sockets[HTTP].revents & POLLIN) {

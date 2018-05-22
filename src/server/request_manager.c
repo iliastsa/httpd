@@ -2,8 +2,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <fcntl.h>
 #include <limits.h>
+#include <fcntl.h>
 #include <time.h>
 
 #include "server_manager.h"
