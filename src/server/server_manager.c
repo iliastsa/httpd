@@ -163,7 +163,6 @@ char server_run(ServerResources *server) {
     sockets[CMD].events = POLLIN;
 
     for(;;) {
-        // TODO : Check status, and act accordingly
         int status = poll(sockets, 2, -10000);
 
         if (status == 0)
@@ -177,25 +176,38 @@ char server_run(ServerResources *server) {
                     continue;
             }
 
-        int fd;
         if (sockets[HTTP].revents & POLLIN) {
+            int fd;
             if ((fd = accept(sockets[HTTP].fd, NULL, NULL)) < 0) {
                 P_ERR("Error accepting connection", errno);
             }
+            else {
+                P_DEBUG("Incoming fd : %d\n", fd);
+                // Allocate int to pass to thread
+                AcceptArgs *params = (AcceptArgs*) malloc(sizeof(AcceptArgs));
+                if (params == NULL) {
+                    P_ERR("Error allocation memory for thread arg", errno);
+                    close(fd);
+                }
+                else {
+                    // Prepare parameters to be passed to handler function
+                    params->fd       = fd;
+                    params->root_dir = server->root_dir;
+                    params->stats    = &server->stats;
 
-            P_DEBUG("Incoming fd : %d\n", fd);
-            // Allocate int to pass to thread
-            AcceptArgs *params = (AcceptArgs*) malloc(sizeof(AcceptArgs));
-            if (params == NULL) {
-                P_ERR("Error allocation memory for thread arg", errno);
+                    thread_pool_add(server->thread_pool, accept_http, NULL, params);
+                }
             }
+        }
 
-            // Prepare parameters to be passed to handler function
-            params->fd       = fd;
-            params->root_dir = server->root_dir;
-            params->stats    = &server->stats;
-
-            thread_pool_add(server->thread_pool, accept_http, NULL, params);
+        if (sockets[CMD].revents & POLLIN) {
+            int fd;
+            if ((fd = accept(sockets[CMD].fd, NULL, NULL)) < 0) {
+                P_ERR("Error accepting connection", errno);
+            }
+            else {
+                P_DEBUG("Accept command connection : %d\n", fd);
+            }
         }
     }
 
