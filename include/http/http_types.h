@@ -3,6 +3,8 @@
 
 #include "str_map.h"
 
+#define HTTP_TIMEOUT 5
+
 typedef enum {
     BAD_REQUEST = 0,
     NOT_IMPLEMENTED,
@@ -10,6 +12,7 @@ typedef enum {
     UNEXPECTED,
     NOT_FOUND,
     FORBIDDEN,
+    TIMEOUT,
     OK
 } HttpError;
 

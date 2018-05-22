@@ -6,8 +6,9 @@
 #include <errno.h>
 
 #include "parse_utils.h"
+#include "http_types.h"
+#include "network_io.h"
 #include "request.h"
-#include "http_io.h"
 #include "utils.h"
 
 #define CHUNK_SZ 1024
@@ -56,6 +57,9 @@ void print_debug(HttpError error) {
         case NOT_FOUND:
             P_DEBUG("Requested file not found\n");
             break;
+        case TIMEOUT:
+            P_DEBUG("Request timed out\n");
+            break;
         case OK:
             P_DEBUG("Request line OK!\n");
             break;
@@ -63,12 +67,14 @@ void print_debug(HttpError error) {
 }
 
 char init_request(HttpRequest *request){
+    request->key_value_pairs = NULL;
+    request->requested_file  = NULL;
+    request->header          = NULL;
+
     StrHashMap *map = (StrHashMap*) malloc(sizeof(StrHashMap));
 
     if (map == NULL) {
         P_DEBUG("Memory allocation for HTTP request failed\n");
-
-        request->key_value_pairs = NULL;
         return -1;
     }
 
@@ -112,15 +118,18 @@ HttpError read_request(int fd, char **header_buf) {
     int termination_found = 0;
 
     for (;;) {
-        int bytes_read = read_bytes(fd, chunk_buf, CHUNK_SZ);
+        int bytes_read = read_bytes(fd, chunk_buf, HTTP_TIMEOUT, CHUNK_SZ);
 
-        if (bytes_read < 0) {
+        if (bytes_read <= 0) {
             free(currently_read);
-            return UNEXPECTED;
-        }
-        else if (bytes_read == 0) {
-            free(currently_read);
-            return BAD_REQUEST;
+            switch (bytes_read) {
+                case 0:
+                    return BAD_REQUEST;
+                case IO_TIMEOUT:
+                    return TIMEOUT;
+                default:
+                    return UNEXPECTED;
+            }
         }
 
         // We need to grow the header, allocate space to accomodate the new header

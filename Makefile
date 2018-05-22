@@ -33,7 +33,6 @@ HTTP_INCL_DIR = ./include/http/
 HTTP_CFILES = request.c\
 			  parse_utils.c\
 			  response_messages.c\
-			  http_io.c\
 
 HTTP_DEPS   = ./include/http/*
 
@@ -46,6 +45,7 @@ COMMONS_INCL_DIR = ./include/commons/
 
 COMMONS_CFILES = str_map.c\
 				 utils.c\
+				 network_io.c\
 
 COMMONS_DEPS   = ./include/commons/*
 
@@ -90,8 +90,6 @@ bin/test/%.o : src/test/%.c $(TEST_DEPS)
 	$(CC) -c $(CFLAGS) -I $(TEST_INCL_DIR) -I $(COMMONS_INCL_DIR) -I $(SERVER_INCL_DIR) -I $(HTTP_INCL_DIR) $< -o $@
 
 clean:
-	rm -f $(TP_OBJ)
-	rm -f $(COMMONS_OBJ)
-	rm -f $(HTTP_OBJ)
+	rm -f $(TP_OBJ) $(COMMONS_OBJ) $(HTTP_OBJ) $(SERVER_OBJ)
 	rm -f $(TEST_TARGET) $(TEST_OBJ)
 

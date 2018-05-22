@@ -62,6 +62,16 @@ const char * const response_messages[] =
     "\r\n"
     "<html>Forbidden</html>",
 
+    // Timeout
+    [TIMEOUT] =
+    "HTTP/1.1 408 Request Timeout\r\n"
+    "Date: %s\r\n"
+    "Content-Length: 28\r\n"
+    "Content-Type: text/html\r\n"
+    "Connection: Closed\r\n"
+    "\r\n"
+    "<html>Request Timeout</html>",
+
     // OK
     [OK] = 
     "HTTP/1.1 200 OK\r\n"

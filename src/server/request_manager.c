@@ -8,8 +8,9 @@
 
 #include "server_manager.h"
 #include "server_types.h"
+#include "http_types.h"
+#include "network_io.h"
 #include "request.h"
-#include "http_io.h"
 #include "utils.h"
 
 extern const char * const response_messages[];
@@ -52,7 +53,7 @@ void write_err_response(int fd, HttpError err) {
         goto EXIT;
     }
 
-    write_bytes(fd, msg, len);
+    write_bytes(fd, msg, HTTP_TIMEOUT, len);
 
 EXIT:
     free(msg);
@@ -101,7 +102,7 @@ void write_ok_response(int fd, char *file, ServerStats *stats) {
     }
 
     // If header write and html file write suceeded, update the stats
-    if (!write_bytes(fd, msg, len) && !write_file(fd, file))
+    if ((write_bytes(fd, msg, HTTP_TIMEOUT, len) == IO_OK) && (write_file(fd, file, HTTP_TIMEOUT == IO_OK)))
         update_stats(stats, sz);
 
 EXIT:
