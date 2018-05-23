@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 
+#define IO_INVALID -3
 #define IO_TIMEOUT -2
 #define IO_UNEXPECTED -1
 #define IO_OK 0
