@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <poll.h>
 
+#include "command_manager.h"
 #include "request_manager.h"
 #include "server_types.h"
 #include "utils.h"
@@ -207,6 +208,9 @@ char server_run(ServerResources *server) {
             }
             else {
                 P_DEBUG("Accept command connection : %d\n", fd);
+
+                if (accept_command(fd, server) == CMD_SHUTDOWN)
+                    break;
             }
         }
     }

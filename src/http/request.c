@@ -14,29 +14,6 @@
 #define CHUNK_SZ 1024
 
 static
-int copy_until_end(char *source, char *dest, int sz, int *offset){
-    // Used to recognise the end of the header
-    const char *end_of_header = "\r\n\r\n";
-    int pattern_end = strlen(end_of_header);
-
-    for (int i = 0; i < sz; ++i) {
-        dest[i] = source[i];
-
-        if (source[i] == end_of_header[*offset]) {
-            //P_DEBUG("Found symbol num %d from end of header delimiter\n", *offset);
-            (*offset)++;
-        }
-        else
-            *offset = 0;
-
-        if (*offset == pattern_end)
-            return i;
-    }
-
-    return -1;
-}
-
-static
 void print_debug(HttpError error) {
     switch (error) {
         case BAD_REQUEST:
@@ -146,7 +123,7 @@ HttpError read_request(int fd, char **header_buf) {
             memcpy(new_buf, currently_read, header_length - bytes_read);
 
         int end = 0;
-        if ((end=copy_until_end(chunk_buf, new_buf + header_length - bytes_read, bytes_read, &pattern_idx)) >= 0) {
+        if ((end=copy_until_delim(chunk_buf, new_buf + header_length - bytes_read, bytes_read, &pattern_idx, "\r\n\r\n")) >= 0) {
             P_DEBUG("Found end of request sequence at byte %d\n", header_length - bytes_read + end);
             P_DEBUG("Setting 2 bytes from the end to NULL, to signify string end\n");
 

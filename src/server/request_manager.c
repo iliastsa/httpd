@@ -102,7 +102,7 @@ void write_ok_response(int fd, char *file, ServerStats *stats) {
     }
 
     // If header write and html file write suceeded, update the stats
-    if ((write_bytes(fd, msg, HTTP_TIMEOUT, len) == IO_OK) && (write_file(fd, file, HTTP_TIMEOUT == IO_OK)))
+    if ((write_bytes(fd, msg, HTTP_TIMEOUT, len) == IO_OK) && (write_file(fd, file, HTTP_TIMEOUT) == IO_OK))
         update_stats(stats, sz);
 
 EXIT:

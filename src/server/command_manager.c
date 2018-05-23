@@ -1,35 +1,14 @@
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
+#include "command_manager.h"
 #include "server_types.h"
 #include "network_io.h"
 #include "utils.h"
 
 #define CMD_BUF_SZ 512
 #define CMD_TIMEOUT 10
-
-static
-int copy_until_end(char *source, char *dest, int sz, int *offset){
-    // Used to recognise the end of the header
-    const char *end_of_header = "\r\n";
-    int pattern_end = strlen(end_of_header);
-
-    for (int i = 0; i < sz; ++i) {
-        dest[i] = source[i];
-
-        if (source[i] == end_of_header[*offset]) {
-            //P_DEBUG("Found symbol num %d from end of header delimiter\n", *offset);
-            (*offset)++;
-        }
-        else
-            *offset = 0;
-
-        if (*offset == pattern_end)
-            return i;
-    }
-
-    return -1;
-}
 
 static
 int read_command(int fd, char **cmd_buf){
@@ -73,8 +52,8 @@ int read_command(int fd, char **cmd_buf){
             memcpy(new_buf, currently_read, command_length - bytes_read);
 
         int end = 0;
-        if ((end=copy_until_end(chunk_buf, new_buf + command_length - bytes_read, bytes_read, &pattern_idx)) >= 0) {
-            P_DEBUG("Found end of command sequence at byte %d\n", header_length - bytes_read + end);
+        if ((end=copy_until_delim(chunk_buf, new_buf + command_length - bytes_read, bytes_read, &pattern_idx, "\r\n")) >= 0) {
+            P_DEBUG("Found end of command sequence at byte %d\n", command_length - bytes_read + end);
             P_DEBUG("Setting 2 bytes from the end to NULL, to signify string end\n");
 
             new_buf[command_length - bytes_read + end - 1] = '\0';
@@ -92,11 +71,28 @@ int read_command(int fd, char **cmd_buf){
     return IO_OK;
 }
 
-int accept_command(int fd, ServerStats *stats) {
-    char *cmd;
+static
+void cmd_stats(int fd, ServerResources *server) {
+}
+
+int accept_command(int fd, ServerResources *server) {
+    char *cmd = NULL;
 
     int err;
-    if ((err = read_command(fd, &buf)) != IO_OK) {
-        switcha(err)
+    if ((err = read_command(fd, &cmd)) != IO_OK)
+        goto EXIT;
+
+    if (!strcmp(cmd, "SHUTDOWN")) {
+        err = CMD_SHUTDOWN;
+    } else if (!strcmp(cmd, "STATS")) {
+        cmd_stats(fd, server);
+        err = CMD_STATS;
+    } else {
+        err = CMD_UNKNOWN;
     }
+
+EXIT:
+    free(cmd);
+    close(fd);
+    return err;
 }

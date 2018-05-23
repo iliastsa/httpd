@@ -15,5 +15,7 @@
 #define ERR(msg) fprintf(stderr, "%s\n", msg)
 #define P_ERR(msg,err) fprintf(stderr, "%s : %s\n", msg, strerror(err))
 
+int copy_until_delim(char *source, char *dest, int sz, int *offset, const char *delim);
 char count_bytes(char *filepath, long *n_bytes);
+
 #endif

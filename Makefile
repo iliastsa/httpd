@@ -20,6 +20,7 @@ SERVER_INCL_DIR = ./include/server/
 
 SERVER_CFILES = server_manager.c\
 				request_manager.c\
+				command_manager.c\
 
 SERVER_DEPS   = ./include/server/*
 

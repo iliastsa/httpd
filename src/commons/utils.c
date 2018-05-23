@@ -4,6 +4,26 @@
 
 #include "utils.h"
 
+int copy_until_delim(char *source, char *dest, int sz, int *offset, const char *delim){
+    int pattern_end = strlen(delim);
+
+    for (int i = 0; i < sz; ++i) {
+        dest[i] = source[i];
+
+        if (source[i] == delim[*offset]) {
+            //P_DEBUG("Found symbol num %d from end of header delimiter\n", *offset);
+            (*offset)++;
+        }
+        else
+            *offset = 0;
+
+        if (*offset == pattern_end)
+            return i;
+    }
+
+    return -1;
+}
+
 char count_bytes(char *filepath, long *n_bytes) {
     FILE *fp = fopen(filepath, "r");
 
