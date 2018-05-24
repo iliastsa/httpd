@@ -29,5 +29,6 @@ char init_request(HttpRequest *requst);
 void free_request(HttpRequest *request);
 HttpError read_request(int fd, char **header_buf);
 HttpError parse_request(char *request, HttpRequest *req);
+HttpError check_header(StrHashMap *header);
 
 #endif

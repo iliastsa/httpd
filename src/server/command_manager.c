@@ -54,9 +54,6 @@ int read_command(int fd, char **cmd_buf){
 
         int end = 0;
         if ((end=copy_until_delim(chunk_buf, new_buf + command_length - bytes_read, bytes_read, &pattern_idx, "\r\n")) >= 0) {
-            P_DEBUG("Found end of command sequence at byte %d\n", command_length - bytes_read + end);
-            P_DEBUG("Setting 2 bytes from the end to NULL, to signify string end\n");
-
             new_buf[command_length - bytes_read + end - 1] = '\0';
             termination_found = 1;
         }

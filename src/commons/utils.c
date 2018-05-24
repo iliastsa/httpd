@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "utils.h"
 
@@ -80,4 +81,11 @@ int check_dir_access(char *dir) {
         return -1;
 
     return 0;
+}
+
+void str_to_lowercase(char *str) {
+    size_t len = strlen(str);
+
+    for (size_t i = 0; i < len; ++i)
+        str[i] = tolower(str[i]);
 }

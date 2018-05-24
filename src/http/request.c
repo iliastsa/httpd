@@ -13,6 +13,7 @@
 
 #define CHUNK_SZ 1024
 
+
 static
 void print_debug(HttpError error) {
     switch (error) {
@@ -124,8 +125,6 @@ HttpError read_request(int fd, char **header_buf) {
 
         int end = 0;
         if ((end=copy_until_delim(chunk_buf, new_buf + header_length - bytes_read, bytes_read, &pattern_idx, "\r\n\r\n")) >= 0) {
-            P_DEBUG("Found end of request sequence at byte %d\n", header_length - bytes_read + end);
-            P_DEBUG("Setting 2 bytes from the end to NULL, to signify string end\n");
 
             new_buf[header_length - bytes_read + end - 1] = '\0';
             termination_found = 1;
@@ -139,6 +138,30 @@ HttpError read_request(int fd, char **header_buf) {
     }
 
     *header_buf = currently_read;
+    return OK;
+}
+
+static
+int assert_header(StrHashMap *header, char * key, char *val) {
+    char *ret = lookup_str_map(header, key);
+
+    if (ret == NULL || (val != NULL && strcmp(ret, val)))
+        return -1;
+
+    return 0;
+}
+
+HttpError check_header(StrHashMap *header) {
+    // Check connection field
+    // Throw error if it does not exist or value is different than keep-alive
+    // and closed.
+    if (assert_header(header, "connection", "keep-alive") &&
+        assert_header(header, "connection", "closed"))
+        return BAD_REQUEST;
+
+    // More checks can be added here, the code is very modular,
+    // for the purpose of this exercise, only connection is checked.
+    
     return OK;
 }
 
@@ -178,6 +201,8 @@ HttpError parse_request(char *request, HttpRequest *req){
         if ((err = parse_general_header(line_ptr, req)) != OK)
             return err;
     }
+
+    print_str_map(req->key_value_pairs);
 
     return OK;
 }

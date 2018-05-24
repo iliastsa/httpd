@@ -4,6 +4,7 @@
 
 #include "parse_utils.h"
 #include "request.h"
+#include "utils.h"
 
 char check_line_termination(char *header) {
     int len = strlen(header);
@@ -144,6 +145,7 @@ HttpError parse_general_header(char *request_line, HttpRequest *request) {
     // Read value portion
     value = strtok_r(NULL, "\r", &save_ptr);
 
+    // If key or value is NULL
     if (!(key && value))
         return BAD_REQUEST;
 
@@ -161,10 +163,15 @@ HttpError parse_general_header(char *request_line, HttpRequest *request) {
     if (strlen(value) == 0)
         return BAD_REQUEST;
 
+    // Convert key to lowercase
+    str_to_lowercase(key);
+
     int status = insert_str_map(request->key_value_pairs, key, value);
 
+    // Something wrong happened
     if (status < 0)
         return UNEXPECTED;
+    // Duplicate field (generally not wrong, but for most fields it is)
     else if (status == 0)
         return BAD_REQUEST;
 

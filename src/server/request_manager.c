@@ -199,6 +199,9 @@ void accept_http(void *arg) {
     if ((err = parse_request(header, request)) != OK)
         goto CLOSE_CONNECTION;
 
+    if ((err = check_header(request->key_value_pairs)) != OK)
+        goto CLOSE_CONNECTION;
+
     int root_len = strlen(root_dir);
     int file_len = strlen(request->requested_file);
 

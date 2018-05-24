@@ -40,8 +40,9 @@ void test_server(){
 
     if (server_init_sockets(server, 10) < 0)
         return;
+    else
+        server_run(server);
 
-    server_run(server);
     free_server(server);
 }
 

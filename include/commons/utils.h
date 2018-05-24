@@ -27,5 +27,6 @@ int copy_until_delim(char *source, char *dest, int sz, int *offset, const char *
 char count_bytes(char *filepath, long *n_bytes);
 void diff_time(struct timeval *t_start, struct timeval *t_end, TimeFormat *t_diff);
 int check_dir_access(char *dir);
+void str_to_lowercase(char *str);
 
 #endif
