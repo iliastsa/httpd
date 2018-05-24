@@ -243,7 +243,10 @@ char server_run(ServerResources *server) {
                     params->root_dir = server->root_dir;
                     params->stats    = &server->stats;
 
-                    thread_pool_add(server->thread_pool, accept_http, NULL, params);
+                    if (thread_pool_add(server->thread_pool, accept_http, NULL, params) < 0) {
+                        free(params);
+                        ERR("Failed to insert task to thread pool queue");
+                    }
                 }
             }
         }
