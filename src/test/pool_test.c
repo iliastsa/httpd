@@ -35,7 +35,12 @@ void test_threads() {
 void test_server(){
     ServerResources *server = server_create(9090, 8080, 3, "../../../../root_dir");
 
-    server_init_sockets(server, 10);
+    if (server == NULL)
+        return;
+
+    if (server_init_sockets(server, 10) < 0)
+        return;
+
     server_run(server);
     free_server(server);
 }
