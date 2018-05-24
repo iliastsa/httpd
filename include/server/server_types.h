@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <pthread.h>
 #include <time.h>
 
@@ -25,7 +26,7 @@ typedef struct {
     char *root_dir;
 
     // Server startup time
-    time_t t_start;
+    struct timeval t_start;
 
     // Thread pool
     thread_pool *thread_pool;

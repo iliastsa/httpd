@@ -1,3 +1,4 @@
+#include <sys/time.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -46,4 +47,21 @@ char count_bytes(char *filepath, long *n_bytes) {
 
     fclose(fp);
     return 0;
+}
+
+void diff_time(struct timeval *t_start, struct timeval *t_end, TimeFormat *t_diff) {
+    unsigned long long int s_diff = t_end->tv_sec - t_start->tv_sec;
+    unsigned long long int ms_diff = s_diff * 1000 +  (t_end->tv_usec - t_start->tv_usec) / 1000;
+
+    t_diff->hours = ms_diff / 3600000;
+
+    ms_diff %= 3600000;
+
+    t_diff->minutes = ms_diff / 60000;
+
+    ms_diff %= 60000;
+
+    t_diff->seconds = ms_diff / 1000;
+
+    t_diff->milisec = ms_diff % 1000;
 }

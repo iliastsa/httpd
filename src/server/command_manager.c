@@ -3,12 +3,13 @@
 #include <unistd.h>
 
 #include "command_manager.h"
+#include "server_manager.h"
 #include "server_types.h"
 #include "network_io.h"
 #include "utils.h"
 
 #define CMD_BUF_SZ 512
-#define CMD_TIMEOUT 10
+#define CMD_TIMEOUT  5
 
 static
 int read_command(int fd, char **cmd_buf){
@@ -73,6 +74,63 @@ int read_command(int fd, char **cmd_buf){
 
 static
 void cmd_stats(int fd, ServerResources *server) {
+    static const char *msg_fmt = 
+    "Server up for %02llu:%02llu:%02llu.%03llu, served %llu pages, %llu bytes\r\n";
+
+    // Buffer where our message is stored
+    char *msg = NULL;
+
+    // Get current time
+    struct timeval t_now;
+    if (gettimeofday(&t_now, NULL) < 0)
+        return;
+
+    // Calculate time difference
+    TimeFormat t_diff;
+    diff_time(&server->t_start, &t_now, &t_diff);
+
+    // Get a instance of the server stats (needs locking to ensure atomicity)
+    ServerStats stats;
+    get_stats_instance(&server->stats, &stats);
+
+    // Calculate required buffer length
+    int len = snprintf(NULL, 0, msg_fmt, t_diff.hours, 
+                                         t_diff.minutes, 
+                                         t_diff.seconds, 
+                                         t_diff.milisec,
+                                         stats.page_count,
+                                         stats.byte_count);
+
+    if (len < 0) { 
+        P_DEBUG("sprintf failed while stats string\n");
+        goto EXIT;
+    }
+
+    // Allocate buffer
+    msg = malloc (len + 1);
+
+    if (msg == NULL) {
+        P_ERR("Malloc failed for stats string", errno);
+        goto EXIT;
+    }
+
+    len = snprintf(msg, len + 1, msg_fmt, t_diff.hours, 
+                                          t_diff.minutes, 
+                                          t_diff.seconds, 
+                                          t_diff.milisec,
+                                          stats.page_count,
+                                          stats.byte_count);
+
+    if (len < 0) { 
+        P_DEBUG("sprintf failed while stats string\n");
+        goto EXIT;
+    }
+
+    // Send message
+    write_bytes(fd, msg, CMD_TIMEOUT, len);
+
+EXIT:
+    free(msg);
 }
 
 int accept_command(int fd, ServerResources *server) {

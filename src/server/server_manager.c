@@ -31,7 +31,11 @@ ServerResources *server_create(int s_port, int c_port, int n_threads, char *r_di
     server->root_dir = r_dir;
 
     // Read current time
-    time(&server->t_start);
+    if (gettimeofday(&server->t_start, NULL) < 0) {
+        P_ERR("Failed to get startup time", errno);
+        free(server);
+        return NULL;
+    }
 
     // Set stats
     server->stats.page_count = 0;
@@ -49,6 +53,7 @@ ServerResources *server_create(int s_port, int c_port, int n_threads, char *r_di
 
     if (server->thread_pool == NULL) {
         ERR("Thread pool creation failed");
+        pthread_mutex_destroy(&server->stats.lock);
         free(server);
         return NULL;
     }
@@ -89,6 +94,24 @@ void update_stats(ServerStats *stats, unsigned long long bytes) {
 
     if((err = pthread_mutex_unlock(&stats->lock)))
         P_ERR("Could not unlock lock for stats", err);
+}
+
+int get_stats_instance(ServerStats *src, ServerStats *dest) {
+    int err;
+    if((err = pthread_mutex_lock(&src->lock))) {
+        P_ERR("Could not acquire lock for stats", err);
+        return -1;
+    }
+
+    dest->byte_count = src->byte_count;
+    dest->page_count = src->page_count;
+
+    if((err = pthread_mutex_unlock(&src->lock))) {
+        P_ERR("Could not unlock lock for stats", err);
+        return -1;
+    }
+
+    return 0;
 }
 
 static
