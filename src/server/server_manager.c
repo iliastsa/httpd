@@ -1,5 +1,8 @@
-#include <unistd.h>
+#define _GNU_SOURCE
+#include <sys/stat.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <poll.h>
 
 #include "command_manager.h"
@@ -26,9 +29,22 @@ ServerResources *server_create(int s_port, int c_port, int n_threads, char *r_di
     server->serving_port = s_port; 
     server->command_port = c_port; 
 
-    // TODO : First check if root dir is accessible and readable
     // Set root_dir
-    server->root_dir = r_dir;
+    server->root_dir = realpath(r_dir, NULL);
+
+    if (server->root_dir == NULL) {
+        P_ERR("Failed to expand root directory path", errno);
+        free(server);
+        return NULL;
+    }
+
+    // Check if directory exists and is readable
+    if (check_dir_access(server->root_dir) < 0) {
+        P_ERR("Could not access provided root directory", errno);
+        free(server->root_dir);
+        free(server);
+        return NULL;
+    }
 
     // Read current time
     if (gettimeofday(&server->t_start, NULL) < 0) {
@@ -58,6 +74,11 @@ ServerResources *server_create(int s_port, int c_port, int n_threads, char *r_di
         return NULL;
     }
 
+    fprintf(stderr, "Server parameters and thread pool intialized\n");
+    fprintf(stderr, "Root Directory : %s\n", server->root_dir);
+
+    fprintf(stderr, "HTTP port : %d   CMD port : %d\n", server->serving_port, server->command_port);
+
     return server;
 }
 
@@ -70,6 +91,9 @@ void free_server(ServerResources *server) {
 
     if (server->cmd_socket != -1)
         close(server->cmd_socket);
+
+    if (server->root_dir != NULL)
+        free(server->root_dir);
 
     // Destroy thread pool
     thread_pool_destroy(server->thread_pool);

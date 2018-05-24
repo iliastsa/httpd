@@ -1,4 +1,5 @@
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -64,4 +65,19 @@ void diff_time(struct timeval *t_start, struct timeval *t_end, TimeFormat *t_dif
     t_diff->seconds = ms_diff / 1000;
 
     t_diff->milisec = ms_diff % 1000;
+}
+
+int check_dir_access(char *dir) {
+    struct stat d_stats;
+
+    if (stat(dir, &d_stats) < 0)
+        return -1;
+
+    if (!S_ISDIR(d_stats.st_mode))
+        return -1;
+
+    if (!(d_stats.st_mode & S_IRUSR))
+        return -1;
+
+    return 0;
 }
