@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <poll.h>
 
 #include "command_manager.h"
@@ -12,6 +13,33 @@
 
 #define HTTP 0
 #define CMD  1
+
+static
+void block_thread_signals(sigset_t *oldset) {
+    sigset_t new_set;
+
+    sigemptyset(&new_set);
+
+    sigaddset(&new_set, SIGINT);
+    sigaddset(&new_set, SIGTERM);
+    sigaddset(&new_set, SIGALRM);
+
+    pthread_sigmask(SIG_SETMASK, &new_set, oldset);
+}
+
+static
+void unblock_thread_signals(sigset_t *set) {
+    pthread_sigmask(SIG_SETMASK, set, NULL);
+}
+
+static 
+void setup_server_signals() {
+    sigset_t set;
+
+    sigemptyset(&set);
+
+    signal(SIGPIPE, SIG_IGN);
+}
 
 ServerResources *server_create(int s_port, int c_port, int n_threads, char *r_dir) {
     ServerResources *server = (ServerResources*) malloc(sizeof(ServerResources));
@@ -64,8 +92,15 @@ ServerResources *server_create(int s_port, int c_port, int n_threads, char *r_di
         return NULL;
     }
 
+    sigset_t sig_set;
+
+    setup_server_signals();
+    block_thread_signals(&sig_set);
+
     // Create thread pool
     server->thread_pool = thread_pool_create(n_threads);
+
+    unblock_thread_signals(&sig_set);
 
     if (server->thread_pool == NULL) {
         ERR("Thread pool creation failed");
@@ -191,14 +226,6 @@ char server_init_sockets(ServerResources *server, int backlog) {
     printf("Done.\n");
 
     return 0;
-}
-
-void thread_accept(void *arg) {
-    int fd = *(int*)arg;
-
-    P_DEBUG("Got fd %d\n", fd);
-    
-    close(fd);
 }
 
 char server_run(ServerResources *server) {
