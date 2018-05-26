@@ -150,7 +150,7 @@ int assert_header(StrHashMap *header, char * key, char *val) {
     return 0;
 }
 
-HttpError check_header(StrHashMap *header) {
+HttpError check_request_header(StrHashMap *header) {
     // Check connection field
     // Throw error if it does not exist or value is different than keep-alive
     // and closed.
