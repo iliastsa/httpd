@@ -133,7 +133,7 @@ EXIT:
 int accept_command(int fd, ServerResources *server) {
     char *cmd = NULL;
 
-    int err;
+    int err = CMD_UNKNOWN;
     if ((err = read_command(fd, &cmd)) != IO_OK)
         goto EXIT;
 
@@ -142,6 +142,8 @@ int accept_command(int fd, ServerResources *server) {
     } else if (!strcmp(cmd, "STATS")) {
         cmd_stats(fd, server);
         err = CMD_STATS;
+    } else if (!strcmp(cmd, "KILLT")) {
+        pthread_cancel(server->thread_pool->threads[0]);
     } else {
         err = CMD_UNKNOWN;
     }

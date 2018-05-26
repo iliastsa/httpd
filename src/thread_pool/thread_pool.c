@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +9,10 @@
 #include "thread_pool.h"
 
 static void* thread_run(void *t_pool);
+
+#ifdef TEST_KILL
+static int test_kill = 1;
+#endif
 
 thread_pool *thread_pool_create(int n_workers) {
     int err;
@@ -48,6 +53,10 @@ thread_pool *thread_pool_create(int n_workers) {
         threadpool->n_threads++;
     }
 
+    #ifdef TEST_KILL
+    test_kill = 0;
+    #endif
+
     return threadpool;
 }
 
@@ -68,6 +77,11 @@ int thread_pool_add(thread_pool *threadpool, void (*handler)(void*), void (*dest
 
 static void* thread_run(void *t_pool) {
     thread_pool *pool = (thread_pool*) t_pool;
+
+    #ifdef TEST_KILL
+    if (test_kill)
+        return NULL;
+    #endif
 
     for (;;) {
         // Acquire lock since the get function requires it
@@ -108,6 +122,15 @@ static void* thread_run(void *t_pool) {
     pthread_exit(NULL);
 
     return NULL;
+}
+
+void try_revive(thread_pool *pool) {
+    for (int i = 0; i < pool->n_threads; ++i) {
+        if (pthread_tryjoin_np(pool->threads[i], NULL) == 0) {
+            fprintf(stderr ,"Reviving thread with id %d\n", i);
+            pthread_create(pool->threads + i, NULL, thread_run, pool);
+        }
+    }
 }
 
 void thread_pool_destroy(thread_pool *pool) {

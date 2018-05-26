@@ -14,6 +14,8 @@
 #define HTTP 0
 #define CMD  1
 
+volatile static sig_atomic_t check_workers = 0; 
+
 static
 void block_thread_signals(sigset_t *oldset) {
     sigset_t new_set;
@@ -32,6 +34,11 @@ void unblock_thread_signals(sigset_t *set) {
     pthread_sigmask(SIG_SETMASK, set, NULL);
 }
 
+static
+void alarm_handler(int signum) {
+    check_workers = 1;
+}
+
 static 
 void setup_server_signals() {
     sigset_t set;
@@ -39,6 +46,7 @@ void setup_server_signals() {
     sigemptyset(&set);
 
     signal(SIGPIPE, SIG_IGN);
+    signal(SIGALRM, alarm_handler);
 }
 
 ServerResources *server_create(int s_port, int c_port, int n_threads, char *r_dir) {
@@ -231,14 +239,26 @@ char server_init_sockets(ServerResources *server, int backlog) {
 char server_run(ServerResources *server) {
     struct pollfd sockets[2];
 
+    const int chk_worker_period = 5;
+
     sockets[HTTP].fd     = server->http_socket;
     sockets[HTTP].events = POLLIN;
 
     sockets[CMD].fd     = server->cmd_socket;
     sockets[CMD].events = POLLIN;
 
+    alarm(chk_worker_period);
+
     for(;;) {
-        int status = poll(sockets, 2, -10000);
+        int status = poll(sockets, 2, -1);
+
+        // Check if timer expired, poll is the longest waiting call in this loop
+        if (check_workers) {
+            try_revive(server->thread_pool);
+            check_workers = 0;
+
+            alarm(chk_worker_period);
+        }
 
         if (status == 0)
             break;
@@ -290,6 +310,15 @@ char server_run(ServerResources *server) {
                     break;
             }
         }
+
+        // Check if timer expired
+        if (check_workers) {
+            try_revive(server->thread_pool);
+            check_workers = 0;
+
+            alarm(chk_worker_period);
+        }
+
     }
 
     return 0;

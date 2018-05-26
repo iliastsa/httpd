@@ -14,5 +14,6 @@ typedef struct thread_pool {
 
 thread_pool *thread_pool_create(int n_workers);
 int thread_pool_add(thread_pool *threadpool, void (*handler)(void*), void (*destructor)(void*), void *args);
+void try_revive(thread_pool *pool);
 void thread_pool_destroy(thread_pool *pool);
 #endif
