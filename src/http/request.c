@@ -13,7 +13,6 @@
 
 #define CHUNK_SZ 1024
 
-
 static
 void print_debug(HttpError error) {
     switch (error) {

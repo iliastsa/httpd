@@ -21,11 +21,14 @@ SERVER_INCL_DIR = ./include/server/
 SERVER_CFILES = server_manager.c\
 				request_manager.c\
 				command_manager.c\
+				main.c\
 
 SERVER_DEPS   = ./include/server/*
 
 SERVER_SRC    = $(addprefix $(SERVER_SRCDIR), $(SERVER_CFILES))
 SERVER_OBJ    = $(addprefix $(SERVER_BINDIR), $(SERVER_CFILES:.c=.o))
+
+SERVER_TARGET = myhttpd
 
 HTTP_BINDIR   = ./bin/http/
 HTTP_SRCDIR   = ./src/http/
@@ -72,6 +75,9 @@ TEST_TARGET = run_test
 
 all: $(TEST_TARGET)
 
+$(SERVER_TARGET) : $(TP_OBJ) $(HTTP_OBJ) $(COMMONS_OBJ) $(SERVER_OBJ)
+	$(CC) $(CFLAGS) $(TP_OBJ) $(HTTP_OBJ) $(SERVER_OBJ) $(COMMONS_OBJ) -o $(SERVER_TARGET) -$(LIBS)
+
 $(TEST_TARGET): $(TP_OBJ) $(TEST_OBJ) $(HTTP_OBJ) $(COMMONS_OBJ) $(SERVER_OBJ)
 	$(CC) $(CFLAGS) -I $(TEST_INCL_DIR) $(TEST_OBJ) $(TP_OBJ) $(HTTP_OBJ) $(SERVER_OBJ) $(COMMONS_OBJ) -o run_test -$(LIBS)
 
@@ -91,6 +97,6 @@ bin/test/%.o : src/test/%.c $(TEST_DEPS)
 	$(CC) -c $(CFLAGS) -I $(TEST_INCL_DIR) -I $(COMMONS_INCL_DIR) -I $(SERVER_INCL_DIR) -I $(HTTP_INCL_DIR) $< -o $@
 
 clean:
-	rm -f $(TP_OBJ) $(COMMONS_OBJ) $(HTTP_OBJ) $(SERVER_OBJ)
+	rm -f $(TP_OBJ) $(COMMONS_OBJ) $(HTTP_OBJ)
 	rm -f $(TEST_TARGET) $(TEST_OBJ)
-
+	rm -f $(SERVER_OBJ) $(SERVER_TARGET)
