@@ -8,7 +8,7 @@ const char * const response_messages[] =
     "Date: %s\r\n"
     "Content-Length: 24\r\n"
     "Content-Type: text/html\r\n"
-    "Connection: Closed\r\n"
+    "Connection: close\r\n"
     "\r\n"
     "<html>Bad Request</html>",
 
@@ -18,7 +18,7 @@ const char * const response_messages[] =
     "Date: %s\r\n"
     "Content-Length: 28\r\n"
     "Content-Type: text/html\r\n"
-    "Connection: Closed\r\n"
+    "Connection: close\r\n"
     "\r\n"
     "<html>Not Implemeneted</html>",
 
@@ -28,7 +28,7 @@ const char * const response_messages[] =
     "Date: %s\r\n"
     "Content-Length: 34\r\n"
     "Content-Type: text/html\r\n"
-    "Connection: Closed\r\n"
+    "Connection: close\r\n"
     "\r\n"
     "<html>Version Not Supported</html>",
 
@@ -38,7 +38,7 @@ const char * const response_messages[] =
     "Date: %s\r\n"
     "Content-Length: 34\r\n"
     "Content-Type: text/html\r\n"
-    "Connection: Closed\r\n"
+    "Connection: close\r\n"
     "\r\n"
     "<html>Internal Server Error</html>",
 
@@ -48,7 +48,7 @@ const char * const response_messages[] =
     "Date: %s\r\n"
     "Content-Length: 22\r\n"
     "Content-Type: text/html\r\n"
-    "Connection: Closed\r\n"
+    "Connection: close\r\n"
     "\r\n"
     "<html>Not Found</html>",
 
@@ -58,7 +58,7 @@ const char * const response_messages[] =
     "Date: %s\r\n"
     "Content-Length: 22\r\n"
     "Content-Type: text/html\r\n"
-    "Connection: Closed\r\n"
+    "Connection: close\r\n"
     "\r\n"
     "<html>Forbidden</html>",
 
@@ -68,7 +68,7 @@ const char * const response_messages[] =
     "Date: %s\r\n"
     "Content-Length: 28\r\n"
     "Content-Type: text/html\r\n"
-    "Connection: Closed\r\n"
+    "Connection: close\r\n"
     "\r\n"
     "<html>Request Timeout</html>",
 
@@ -78,6 +78,6 @@ const char * const response_messages[] =
     "Date: %s\r\n"
     "Content-Length: %ld\r\n"
     "Content-Type: text/html\r\n"
-    "Connection: Closed\r\n"
+    "Connection: close\r\n"
     "\r\n"
 };

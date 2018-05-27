@@ -155,7 +155,7 @@ HttpError check_request_header(StrHashMap *header) {
     // Throw error if it does not exist or value is different than keep-alive
     // and closed.
     if (assert_header(header, "connection", "keep-alive") &&
-        assert_header(header, "connection", "closed"))
+        assert_header(header, "connection", "close"))
         return BAD_REQUEST;
 
     // More checks can be added here, the code is very modular,

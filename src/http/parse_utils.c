@@ -165,6 +165,7 @@ HttpError parse_general_header(char *request_line, HttpRequest *request) {
 
     // Convert key to lowercase
     str_to_lowercase(key);
+    str_to_lowercase(value);
 
     int status = insert_str_map(request->key_value_pairs, key, value);
 
