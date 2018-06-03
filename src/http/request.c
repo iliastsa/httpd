@@ -40,9 +40,21 @@ void print_debug(HttpError error) {
         case OK:
             P_DEBUG("Request line OK!\n");
             break;
+        default:
+            break;
     }
 }
 
+/*
+ * Initializes a new request struct.
+ *
+ * Params:
+ * - HttpRequest *request : The request to be initalized.
+ *
+ * Returns:
+ * -  0 if no error occured.
+ * - -1 otherwise.
+ */
 char init_request(HttpRequest *request){
     request->key_value_pairs = NULL;
     request->requested_file  = NULL;
@@ -63,6 +75,14 @@ char init_request(HttpRequest *request){
     return 0;
 }
 
+/*
+ * Frees all memory occupied by the request.
+ *
+ * Params:
+ * - HttpRequest *request : The request to be freed.
+ *
+ * Returns: -
+ */
 void free_request(HttpRequest *request) {
     if (request == NULL)
         return;
@@ -80,6 +100,14 @@ void free_request(HttpRequest *request) {
  * Reads HTTP request, and ignores the body portion. This means that
  * reads are issued until \r\n\r\n is found.
  *
+ * Params:
+ * - int fd            : The file descriptor we are reading from.
+ * - char **header_buf : The buffer that will be allocated for the header
+ *                       to be stored in.
+ *
+ * Returns:
+ * - OK if no error occured
+ * - An appropriate HTTP error code otherwise.
  */
 HttpError read_request(int fd, char **header_buf) {
     char chunk_buf[CHUNK_SZ];
@@ -140,6 +168,17 @@ HttpError read_request(int fd, char **header_buf) {
     return OK;
 }
 
+/*
+ * Checks if a key-value pair exists in the hash map.
+ *
+ * Params:
+ * - StrHashMap *header : The hash map containing the header key-value
+ *                        pairs.
+ *
+ * Returns:
+ * -  0 if the assertion was true
+ * - -1 otherwise
+ */
 static
 int assert_header(StrHashMap *header, char * key, char *val) {
     char *ret = lookup_str_map(header, key);
@@ -150,6 +189,17 @@ int assert_header(StrHashMap *header, char * key, char *val) {
     return 0;
 }
 
+/*
+ * Performs a series of checks on the header key-value pairs.
+ *
+ * Params:
+ * - StrHashMap *header : The hash map containing the header key-value
+ *                        pairs.
+ *
+ * Returns:
+ * - OK if the header content passed all checks.
+ * - BAD_REQUEST if any check failed.
+ */
 HttpError check_request_header(StrHashMap *header) {
     // Check connection field
     // Throw error if it does not exist or value is different than keep-alive
@@ -158,12 +208,25 @@ HttpError check_request_header(StrHashMap *header) {
         assert_header(header, "connection", "close"))
         return BAD_REQUEST;
 
-    // More checks can be added here, the code is very modular,
-    // for the purpose of this exercise, only connection is checked.
+    // More checks can be added here, the code is very modular.
+    // For the purpose of this exercise, only the connection field 
+    // is checked.
     
     return OK;
 }
 
+/*
+ * Parses the request header, and checks if everything is legal.
+ *
+ * Params:
+ * - char *request    : The buffer holding the request header.
+ * - HttpRequest *req : The request struct where the parsed info
+ *                      will be stored.
+ *
+ * Returns:
+ * - OK if the header parse was successful.
+ * - An appropriate HTTP error code otherwise.
+ */
 HttpError parse_request(char *request, HttpRequest *req){
     // Store request into header var of struct
     req->header = request;
@@ -197,7 +260,7 @@ HttpError parse_request(char *request, HttpRequest *req){
         }
 
         // Each line is a key-value pair, that is handled in a similar way
-        if ((err = parse_general_header(line_ptr, req)) != OK)
+        if ((err = parse_general_header(line_ptr, req->key_value_pairs)) != OK)
             return err;
     }
 

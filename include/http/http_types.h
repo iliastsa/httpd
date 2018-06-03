@@ -6,6 +6,7 @@
 #define HTTP_TIMEOUT 5
 
 typedef enum {
+    // Request errors
     BAD_REQUEST = 0,
     NOT_IMPLEMENTED,
     VERSION_NOT_SUPPORTED,
@@ -13,6 +14,11 @@ typedef enum {
     NOT_FOUND,
     FORBIDDEN,
     TIMEOUT,
+    
+    // Response errors
+    BAD_RESPONSE,
+    
+    // OK
     OK
 } HttpError;
 

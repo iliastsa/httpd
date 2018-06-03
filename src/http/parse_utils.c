@@ -6,6 +6,16 @@
 #include "request.h"
 #include "utils.h"
 
+/*
+ * Checks that each \r in the header is followed by a \n.
+ *
+ * Params:
+ * - char *header : The buffer holding the header content.
+ *
+ * Returns:
+ * - -1 if there are unpaired \r or \n.
+ * -  0 if the header is well formed.
+ */
 char check_line_termination(char *header) {
     int len = strlen(header);
 
@@ -21,6 +31,64 @@ char check_line_termination(char *header) {
     return 0;
 }
 
+/*
+ * Parses the response line (first line of the header), and
+ * checks if it is valid.
+ *
+ * Params:
+ * - char *response_line : The buffer holding the response line.
+ *
+ * Returns:
+ * - OK if the response line is legal.
+ * - An appropriate HTTP error code, otherwise.
+ */
+HttpError parse_response_line(char *response_line) {
+    char *code, *status, *protcol_version;
+
+    char *save_ptr = NULL;
+
+    // Read type
+    protcol_version = strtok_r(response_line, " ", &save_ptr);
+
+    // Read requested file
+    code = strtok_r(NULL, " ", &save_ptr);
+
+    // Read protocol version
+    status = strtok_r(NULL, " ", &save_ptr);
+
+    // If some of the fields above are missing, it is a bad request
+    if (!(code && status && protcol_version))
+        return BAD_RESPONSE;
+
+    // Check status
+    if (strcmp(status, "OK"))
+        return BAD_RESPONSE;
+
+    // Check code
+    if (strcmp(code, "200"))
+        return BAD_RESPONSE;
+
+    // We only support HTTP/1.1
+    if (strcmp(protcol_version, "HTTP/1.1"))
+        return BAD_RESPONSE;
+
+    return OK;
+}
+
+/*
+ * Parses the request line (first line of the header), and
+ * checks if it is valid. All useful extracted info is stored in
+ * the request struct.
+ *
+ * Params:
+ * - char *request_line   : The buffer holding the request line.
+ * - HttpRequest *request : The struct holding all relevant information for
+ *                          the request.
+ *
+ * Returns:
+ * - OK if the request line is legal.
+ * - An appropriate HTTP error code, otherwise.
+ */
 HttpError parse_request_line(char *request_line, HttpRequest *request) {
     char *type, *file, *protcol_version;
 
@@ -59,6 +127,19 @@ HttpError parse_request_line(char *request_line, HttpRequest *request) {
     return OK;
 }
 
+/*
+ * Checks if a string contains the specified any of the
+ * specified characters.
+ *
+ * Params:
+ * - char *str         : The string we are interested in.
+ * - const char *chars : The string containing all the characters we 
+ *                       are looking for.
+ *
+ * Returns:
+ * - 1 if the string contains any of the characters in question.
+ * - 0 otherwise.
+ */
 static
 char contains_chars(char *str, const char *chars) {
     size_t len = strlen(str);
@@ -72,6 +153,17 @@ char contains_chars(char *str, const char *chars) {
     return 0;
 }
 
+/*
+ * Removes all trailing chars in the specifed set from a 
+ * string.
+ *
+ * Params:
+ * - char *str         : The string we are interested in.
+ * - const char *chars : The string containing all the characters we 
+ *                       are looking for.
+ *
+ * Returns: -
+ */
 static
 void strip_trailing_chars(char *str, const char *chars) {
     size_t len = strlen(str);
@@ -99,6 +191,17 @@ void strip_trailing_chars(char *str, const char *chars) {
     }
 }
 
+/*
+ * Removes all leading chars in the specifed set from a 
+ * string.
+ *
+ * Params:
+ * - char *str         : The string we are interested in.
+ * - const char *chars : The string containing all the characters we 
+ *                       are looking for.
+ *
+ * Returns: -
+ */
 static
 void strip_leading_chars(char **src, const char *chars) {
     size_t len = strlen(*src);
@@ -130,7 +233,25 @@ void strip_leading_chars(char **src, const char *chars) {
     }
 }
 
-HttpError parse_general_header(char *request_line, HttpRequest *request) {
+/*
+ * Parses a general header line (all lines after the first one are
+ * considred general) and checks if it is valid. Since the header
+ * fields are of the form <key> : <value>, the header is deserialized
+ * and stored into a hash map for future access.
+ *
+ * Any duplicate fields are considered illegal. Keys and values are
+ * converted to lowercase before inserting them into the hash map.
+ *
+ * Params:
+ * - char *request_line     : The buffer holding the header line.
+ * - StrHashMap *header_map : The hash map holding all the header
+ *                            key-value pairs.
+ *
+ * Returns:
+ * - OK if the header line is legal.
+ * - An appropriate HTTP error code, otherwise.
+ */
+HttpError parse_general_header(char *request_line, StrHashMap *header_map) {
     char *key, *value;
 
     char *save_ptr;
@@ -165,16 +286,18 @@ HttpError parse_general_header(char *request_line, HttpRequest *request) {
 
     // Convert key to lowercase
     str_to_lowercase(key);
+
+    // Convert value to lowercase
     str_to_lowercase(value);
 
-    int status = insert_str_map(request->key_value_pairs, key, value);
+    int status = insert_str_map(header_map, key, value);
 
     // Something wrong happened
     if (status < 0)
         return UNEXPECTED;
     // Duplicate field (generally not wrong, but for most fields it is)
     else if (status == 0)
-        return BAD_REQUEST;
+        return BAD_RESPONSE;
 
     return OK;
 }
