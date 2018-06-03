@@ -49,6 +49,19 @@ void setup_server_signals() {
     signal(SIGALRM, alarm_handler);
 }
 
+/*
+ * Create a new server and initialize it.
+ *
+ * params:
+ * - char *s_port  : The serving port.
+ * - char *c_port  : The command port.
+ * - int n_threads : The number of threads we want to have.
+ * - char *r_dir   : The root directory.
+ *
+ * Returns:
+ * - A new server if no error occurred.
+ * - NULL otherwise.
+ */
 ServerResources *server_create(int s_port, int c_port, int n_threads, char *r_dir) {
     ServerResources *server = (ServerResources*) malloc(sizeof(ServerResources));
 
@@ -125,6 +138,14 @@ ServerResources *server_create(int s_port, int c_port, int n_threads, char *r_di
     return server;
 }
 
+/*
+ * Destructor for server.
+ *
+ * Params:
+ * - ServerResources *server : The server we want to free.
+ *
+ * Returns: -
+ */
 void free_server(ServerResources *server) {
     if (server == NULL)
         return;
@@ -149,6 +170,16 @@ void free_server(ServerResources *server) {
     free(server);
 }
 
+/*
+ * Synchronized update for the server statistics.
+ *
+ * Params:
+ * - ServerStats *stats         : The struct containing all the server stats.
+ * - unsigned long long n_bytes : The number of bytes we want to increment the byte
+ *                                counter by.
+ *
+ * Returns: -
+ */
 void update_stats(ServerStats *stats, unsigned long long bytes) {
     int err;
     if((err = pthread_mutex_lock(&stats->lock))) {
@@ -163,6 +194,18 @@ void update_stats(ServerStats *stats, unsigned long long bytes) {
         P_ERR("Could not unlock lock for stats", err);
 }
 
+/*
+ * Synchronized getter for the server stats. Synchronization is needed to avoid
+ * atomicity violations.
+ *
+ * Params:
+ * - ServerStats *src  : The struct we want to copy from.
+ * - ServerStats *dest : The struct we want to copy to.
+ *
+ * Returns:
+ * -  0 if no error occurred.
+ * - -1 otherwise.
+ */
 int get_stats_instance(ServerStats *src, ServerStats *dest) {
     int err;
     if((err = pthread_mutex_lock(&src->lock))) {
@@ -216,6 +259,16 @@ char init_socket(int *sock, struct sockaddr_in *sock_in, int port, int backlog) 
     return 0;
 }
 
+/*
+ * Initialize all server sockets.
+ *
+ * Params:
+ * - ServerResources *server : The struct containing all the server resources.
+ *
+ * Returns:
+ * -  0 if no error occurred.
+ * - -1 otherwise.
+ */
 char server_init_sockets(ServerResources *server, int backlog) {
     printf("Initialzing sockets...\n");
 
@@ -236,6 +289,15 @@ char server_init_sockets(ServerResources *server, int backlog) {
     return 0;
 }
 
+/*
+ * The main event loop.
+ *
+ * Params:
+ * - ServerResources *server : The struct containing all the server resources.
+ *
+ * Returns:
+ * - 0, always.
+ */
 char server_run(ServerResources *server) {
     struct pollfd sockets[2];
 

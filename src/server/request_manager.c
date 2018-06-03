@@ -15,6 +15,16 @@
 
 extern const char * const response_messages[];
 
+/*
+ * This function sends an error response header that corresponds to the
+ * HTTP error code.
+ *
+ * Params:
+ * - int fd        : The file descriptior where the response will be written to.
+ * - HttpError err : The HTTP error code that the caller had.
+ *
+ * Returns: -
+ */
 static
 void write_err_response(int fd, HttpError err) {
     if (err == OK) {
@@ -59,6 +69,17 @@ EXIT:
     free(msg);
 }
 
+/*
+ * This function sends an OK response header, and then sends
+ * the requested file.
+ *
+ * Params:
+ * - int fd             : The file descriptior where the response will be written to.
+ * - char *full_path    : The full path of the requested file.
+ * - ServerStats *stats : The struct containing the server stats, so they can be updated.
+ *
+ * Returns: -
+ */
 static 
 void write_ok_response(int fd, char *file, ServerStats *stats) {
     const char *format = response_messages[OK];
@@ -109,6 +130,17 @@ EXIT:
     free(msg);
 }
 
+/*
+ * Wrapper function that calls the appropriate response function.
+ *
+ * Params:
+ * - int fd             : The file descriptior where the response will be written to.
+ * - HttpError err      : The HTTP error code that the caller had.
+ * - char *full_path    : The full path of the requested file.
+ * - ServerStats *stats : The struct containing the server stats, so they can be updated.
+ *
+ * Returns: -
+ */
 static 
 void write_response(int fd, HttpError err, char *full_path, ServerStats *stats) {
     if (err == OK) 
@@ -117,6 +149,19 @@ void write_response(int fd, HttpError err, char *full_path, ServerStats *stats) 
         write_err_response(fd, err);
 }
 
+/*
+ * Checks if a file exists, we have read access to it and is under the
+ * root directory. It also returns the absolute path of the file.
+ *
+ * Params:
+ * - char *file       : The file we want to check.
+ * - char *root_dir   : The root directory that the server is serving.
+ * - char **full_path : The buffer where the absolute path will be stored.
+ *
+ * Returns:
+ * - OK if no error occured.
+ * - An appropriate HTTP error code otherwise.
+ */
 static
 HttpError check_file_access(char *file, char *root_dir, char **full_path) {
     P_DEBUG("File : (%s) Root : (%s)\n", file, root_dir);
@@ -171,6 +216,16 @@ HttpError check_file_access(char *file, char *root_dir, char **full_path) {
     return OK;
 }
 
+/*
+ * The fucnction that the worker threads run, so they can accept
+ * server requests.
+ *
+ * Params:
+ * - void *arg : The arguments passed to the function. This void pointer
+ *               will ALWAYS point to a struct of type AcceptArgs.
+ *
+ * Returns: -
+ */
 void accept_http(void *arg) {
     int fd             = ((AcceptArgs*)arg)->fd;
     char *root_dir     = ((AcceptArgs*)arg)->root_dir;

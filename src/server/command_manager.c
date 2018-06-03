@@ -11,6 +11,18 @@
 #define CMD_BUF_SZ 512
 #define CMD_TIMEOUT  5
 
+/*
+ * Reads a command from fd, allocates a buffer, stores the command
+ * in it and returns that buffer.
+ *
+ * Params:
+ * - int fd         : The file descriptor we will read from.
+ * - char **cmd_buf : The buffer where we will store the command.
+ *
+ * Returns:
+ * - IO_OK if no error occured.
+ * - An appropriate IO error code otherwise.
+ */
 static
 int read_command(int fd, char **cmd_buf){
     char chunk_buf[CMD_BUF_SZ];
@@ -69,6 +81,15 @@ int read_command(int fd, char **cmd_buf){
     return IO_OK;
 }
 
+/*
+ * Handler for the STATS command
+ *
+ * Params:
+ * - int fd                  : The file descriptor we will respond to.
+ * - ServerResources *server : The struct containing all server resources.
+ *
+ * Returns: -
+ */
 static
 void cmd_stats(int fd, ServerResources *server) {
     static const char *msg_fmt = 
@@ -130,6 +151,17 @@ EXIT:
     free(msg);
 }
 
+/*
+ * Reads the command, analyzes it and calls the appropriate handler.
+ *
+ * Params:
+ * - int fd                  : The file descriptor we will read from and respond to.
+ * - ServerResources *server : The struct containing all server resources.
+ * - int parent_in[2]        : An array holding the pipe fds for parent input.
+ * - int child_in[2]         : An array holding the pipe fds for child input.
+ *
+ * Returns: -
+ */
 int accept_command(int fd, ServerResources *server) {
     char *cmd = NULL;
 
