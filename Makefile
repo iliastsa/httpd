@@ -56,30 +56,10 @@ COMMONS_DEPS   = ./include/commons/*
 COMMONS_SRC    = $(addprefix $(COMMONS_SRCDIR), $(COMMONS_CFILES))
 COMMONS_OBJ    = $(addprefix $(COMMONS_BINDIR), $(COMMONS_CFILES:.c=.o))
 
-TEST_TARGET    = test
-
-TEST_BINDIR    = ./bin/test/
-TEST_SRCDIR    = ./src/test/
-TEST_INCL_DIR    = ./include/thread_pool/
-
-TEST_CFILES = pool_test.c
-
-TEST_DEPS   = ./include/thread_pool/*\
-		      ./include/commons/*\
-			  ./include/http/*\
-
-TEST_SRC    = $(addprefix $(TEST_SRCDIR), $(TEST_CFILES))
-TEST_OBJ    = $(addprefix $(TEST_BINDIR), $(TEST_CFILES:.c=.o))
-
-TEST_TARGET = run_test
-
-all: $(TEST_TARGET)
+all: $(SERVER_TARGET)
 
 $(SERVER_TARGET) : $(TP_OBJ) $(HTTP_OBJ) $(COMMONS_OBJ) $(SERVER_OBJ)
 	$(CC) $(CFLAGS) $(TP_OBJ) $(HTTP_OBJ) $(SERVER_OBJ) $(COMMONS_OBJ) -o $(SERVER_TARGET) -$(LIBS)
-
-$(TEST_TARGET): $(TP_OBJ) $(TEST_OBJ) $(HTTP_OBJ) $(COMMONS_OBJ) $(SERVER_OBJ)
-	$(CC) $(CFLAGS) -I $(TEST_INCL_DIR) $(TEST_OBJ) $(TP_OBJ) $(HTTP_OBJ) $(SERVER_OBJ) $(COMMONS_OBJ) -o run_test -$(LIBS)
 
 bin/thread_pool/%.o : src/thread_pool/%.c $(TP_DEPS) 
 	$(CC) -c $(CFLAGS) -I $(TP_INCL_DIR) $< -o $@
@@ -93,10 +73,5 @@ bin/commons/%.o : src/commons/%.c $(COMMONS_DEPS)
 bin/server/%.o : src/server/%.c $(SERVER_DEPS) $(TP_DEPS)
 	$(CC) -c $(CFLAGS) -I $(HTTP_INCL_DIR) -I $(SERVER_INCL_DIR) -I $(TP_INCL_DIR) -I $(COMMONS_INCL_DIR) $< -o $@
 
-bin/test/%.o : src/test/%.c $(TEST_DEPS) 
-	$(CC) -c $(CFLAGS) -I $(TEST_INCL_DIR) -I $(COMMONS_INCL_DIR) -I $(SERVER_INCL_DIR) -I $(HTTP_INCL_DIR) $< -o $@
-
 clean:
-	rm -f $(TP_OBJ) $(COMMONS_OBJ) $(HTTP_OBJ)
-	rm -f $(TEST_TARGET) $(TEST_OBJ)
-	rm -f $(SERVER_OBJ) $(SERVER_TARGET)
+	rm -f $(TP_OBJ) $(COMMONS_OBJ) $(HTTP_OBJ) $(SERVER_OBJ) $(SERVER_TARGET)
