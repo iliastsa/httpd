@@ -14,6 +14,22 @@
 #define FILE_BUF_SZ 1024
 #define ONE_SECOND  1000
 
+/*
+ * Reads n_bytes from the specified file descriptor, and stores
+ * them into buf. If timeout seconds have passed and no input event
+ * has been detected on fd, the function returns.
+ *
+ * Params:
+ * - int fd         : The file descriptor we want to read from.
+ * - char *buf      : The buffer where the data will be stored.
+ * - int timeout    : The timeout amount. If it is negative, 
+ *                    timeout is +infty.
+ * - size_t n_bytes : The number of bytes to be read.
+ *
+ * Returns:
+ * - Number of bytes_read if all went OK. 
+ * - An appropriate io error code, if an error occured.
+ */
 int read_bytes(int fd, char *buf, int timeout, size_t n_bytes) {
     int bytes_read;
 
@@ -56,6 +72,22 @@ int read_bytes(int fd, char *buf, int timeout, size_t n_bytes) {
     }
 }
 
+/*
+ * Writes n_bytes from the buffer to the specified file descriptor.
+ * If timeout seconds have passed and no read event has been performed
+ * on fd, the function returns.
+ *
+ * Params:
+ * - int fd         : The file descriptor we want to write to.
+ * - char *buf      : The buffer where the data will be read from.
+ * - int timeout    : The timeout amount. If it is negative, 
+ *                    timeout is +infty.
+ * - size_t n_bytes : The number of bytes to be written.
+ *
+ * Returns:
+ * - IO_OK if all went OK. 
+ * - An appropriate io error code, if an error occured.
+ */
 int write_bytes(int fd, char *buf, int timeout, size_t n_bytes) {
     ssize_t total_bytes_written = 0;
     ssize_t remaining_bytes     = n_bytes;
@@ -104,6 +136,22 @@ int write_bytes(int fd, char *buf, int timeout, size_t n_bytes) {
     return IO_OK;
 }
 
+/*
+ * Reads a file and writes it to the file descriptor.
+ * If timeout seconds have passed without and no IO
+ * event has occurred, the function returns.
+ *
+ * Params:
+ * - int fd         : The file descriptor we want to write to.
+ * - char *buf      : The buffer where the data will be read from.
+ * - int timeout    : The timeout amount. If it is negative, 
+ *                    timeout is +infty.
+ * - size_t n_bytes : The number of bytes to be written.
+ *
+ * Returns:
+ * - IO_OK if all went OK. 
+ * - An appropriate io error code, if an error occured.
+ */
 int write_file(int fd, char *filepath, int timeout) {
     int file = open(filepath, O_RDONLY);
 
