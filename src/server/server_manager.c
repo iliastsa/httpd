@@ -106,7 +106,7 @@ ServerResources *server_create(int s_port, int c_port, int n_threads, char *r_di
     block_thread_signals(&sig_set);
 
     // Create thread pool
-    server->thread_pool = thread_pool_create(n_threads);
+    server->thread_pool = thread_pool_create(n_threads, NULL);
 
     unblock_thread_signals(&sig_set);
 

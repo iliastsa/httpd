@@ -16,22 +16,6 @@
 
 #define perror_exit(msg) { perror(msg); exit(-1); }
 
-void thread_func(void *params) {
-    printf("Thread %ld : Test func\n", pthread_self());
-    sleep(1);
-}
-
-void test_threads() {
-    thread_pool *pool = thread_pool_create(2);
-    thread_pool_add(pool, thread_func, NULL, NULL);
-    thread_pool_add(pool, thread_func, NULL, NULL);
-    thread_pool_add(pool, thread_func, NULL, NULL);
-    thread_pool_add(pool, thread_func, NULL, NULL);
-    thread_pool_add(pool, thread_func, NULL, NULL);
-    thread_pool_add(pool, thread_func, NULL, NULL);
-    thread_pool_destroy(pool);
-}
-
 void test_server(){
     ServerResources *server = server_create(9090, 8080, 3, "../../../../root_dir");
 

@@ -14,7 +14,21 @@ static void* thread_run(void *t_pool);
 static int test_kill = 1;
 #endif
 
-thread_pool *thread_pool_create(int n_workers) {
+/*
+ * Allocates memory and intializes a thread_pool.
+ *
+ * Params:
+ * - int n_workers                   : The number of workers threads we want to have.
+ * - void (*inactive_callback)(void) : The function that will be called when the thread
+ *                                     pool becomes in active. 
+ *                                     The thread pool is said to be inactive, when the 
+ *                                     thread count and task count are simultaniously zero.
+ *
+ * Returns:
+ * - A pointer to the new thread pool we created, if no error occured.
+ * - NULL otherwise.
+ */
+thread_pool *thread_pool_create(int n_workers, void (*inactive_callback)(void)) {
     int err;
 
     thread_pool *threadpool = (thread_pool*) malloc(sizeof(thread_pool));
@@ -40,6 +54,9 @@ thread_pool *thread_pool_create(int n_workers) {
 
     threadpool->n_threads = 0;
     threadpool->running   = 1;
+    threadpool->active    = 0;
+
+    threadpool->inactive_callback = inactive_callback;
 
     // Initialize threads
     for (int i = 0; i < n_workers; ++i) {
@@ -60,6 +77,18 @@ thread_pool *thread_pool_create(int n_workers) {
     return threadpool;
 }
 
+/*
+ * Add a new task into the thread pool.
+ *
+ * Params:
+ * - void (*handler)(void*)    : The function that we want the thread pool to run.
+ * - void (*destructor)(void*) : The function that the thread pool will call, to free the arguments.
+ * - void *args                : The arguments that will be passed to the handler.
+ *
+ * Returns:
+ * -  0 if no error occured.
+ * - -1 otherwise.
+ */
 int thread_pool_add(thread_pool *threadpool, void (*handler)(void*), void (*destructor)(void*), void *args){
     // Prepare task struct
     task wrapper;
@@ -75,6 +104,16 @@ int thread_pool_add(thread_pool *threadpool, void (*handler)(void*), void (*dest
     return 0;
 }
 
+/*
+ * Looping function that all worker threads run.
+ *
+ * Params:
+ * - void *args : A pointer to the thread pool that owns the
+ *                worker thread.
+ *
+ * Returns:
+ * - This function always returns NULL.
+ */
 static void* thread_run(void *t_pool) {
     thread_pool *pool = (thread_pool*) t_pool;
 
@@ -96,6 +135,8 @@ static void* thread_run(void *t_pool) {
         // Get task from queue
         task_q_node *q_node = task_queue_get(&pool->task_queue);
 
+        pool->active++;
+
         // Unlock mutex, since we completed our read operation
         pthread_mutex_unlock(&pool->task_queue.queue_rwlock);
 
@@ -113,6 +154,16 @@ static void* thread_run(void *t_pool) {
             free(args);
         else
             destructor(args);
+
+        pthread_mutex_lock(&pool->task_queue.queue_rwlock);
+
+        pool->active--;
+
+        // Inactivity condition
+        if (pool->active == 0 && pool->task_queue.n_tasks == 0 && pool->inactive_callback != NULL)
+            pool->inactive_callback();
+
+        pthread_mutex_unlock(&pool->task_queue.queue_rwlock);
     }
 
     // If we reached here, we are terminating execution, free the lock
@@ -124,6 +175,14 @@ static void* thread_run(void *t_pool) {
     return NULL;
 }
 
+/*
+ * Checks if any thread has died, and revives all dead threads.
+ *
+ * Params:
+ * - thread_pool *pool : The thread pool we are checking.
+ *
+ * Returns: -
+ */
 void try_revive(thread_pool *pool) {
     for (int i = 0; i < pool->n_threads; ++i) {
         if (pthread_tryjoin_np(pool->threads[i], NULL) == 0) {
@@ -133,6 +192,14 @@ void try_revive(thread_pool *pool) {
     }
 }
 
+/*
+ * Releases all memory and resources associated with the thread pool.
+ *
+ * Params:
+ * - thread_pool *pool : The thread pool we want to free.
+ *
+ * Returns: -
+ */
 void thread_pool_destroy(thread_pool *pool) {
     if (pool == NULL)
         return;

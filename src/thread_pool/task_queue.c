@@ -3,6 +3,16 @@
 
 #include "task_queue.h"
 
+/*
+ * Initialized the task queue resources.
+ *
+ * Params:
+ * - task_queue *task_queue : The task queue to be initialized.
+ *
+ * Returns:
+ *  0 if no error occured.
+ * -1 otherwise.
+ */
 int task_queue_init(task_queue *task_queue) {
     // Initialize basic fields
     task_queue->n_tasks = 0;
@@ -25,7 +35,19 @@ int task_queue_init(task_queue *task_queue) {
     return 0;
 }
 
-// Caller must hold the locks
+/*
+ * Extracts a task queue node from the queue.
+ *
+ * The caller IS RESPONSIBLE for locking/unlocking any
+ * necessary locks.
+ * 
+ * Params:
+ * - task_queue *task_queue : The task queue we want to extract from.
+ *
+ * Returns:
+ * - The head of the task queue, if it exists.
+ * - NULL if the queue is empty.
+ */
 task_q_node *task_queue_get(task_queue *task_queue) {
     // Return the head of the queue
     task_q_node *ret = task_queue->head;
@@ -44,6 +66,17 @@ task_q_node *task_queue_get(task_queue *task_queue) {
     return ret;
 }
 
+/*
+ * Inserts a new task in the task queue.
+ *
+ * Params:
+ * - task_queue *task_queue : The task queue we want to insert into.
+ * - task *task             : The task we want to insert.
+ *
+ * Returns:
+ * -  0 if no error occured.
+ * - -1 otherwise.
+ */
 int task_queue_put(task_queue *task_queue, task *task) {
     // Allocate memory for the new queue node.
     task_q_node *new_node = (task_q_node*) malloc(sizeof(task_q_node));
@@ -84,6 +117,14 @@ int task_queue_put(task_queue *task_queue, task *task) {
     return 0;
 }
 
+/*
+ * Frees all resources associated with a task queue.
+ *
+ * Params:
+ * - task_queue *task_queue : The task queue we want to free.
+ *
+ * Returns: -
+ */
 void task_queue_free(task_queue *queue) {
     pthread_mutex_destroy(&queue->queue_rwlock);
     pthread_cond_destroy(&queue->queue_available);
